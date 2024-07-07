@@ -48,24 +48,18 @@ class CapitalistCompany extends Company {
 
 
   constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>) {
-    super(name, cost, industry, requiredWorkers, goodsProduced, wages, 0);
+    super(name, cost, industry, requiredWorkers, goodsProduced, wages);
     this.machineryBonus = {
       function: machineryBonus.function !== undefined ? machineryBonus.function : true,
       Bonus: machineryBonus.Bonus || 0,
     };
   }
   production(industry: string){
-    switch (industry){
-    case 'Acriculture':if this.machineryBonus{
-      CapitalistCompany.add
+    if (this.machineryBonus.function){
+      CapitalistClass.getInstance().addgoodsAndServices(industry,this.machineryBonus.Bonus+this.goodsProduced)
     }
-    case 'Luxury':
-    case 'Heathcare':
-    case 'Education':
-    case 'Media':
     }
   }
-}
 
 class StateCompany extends Company {
 
@@ -73,6 +67,6 @@ class StateCompany extends Company {
     super(name, cost, industry, requiredWorkers, goodsProduced, wages);
   }
   production(){
-    Board.addPublicService(this.industry,this.goodsProduced)
+    Board.getBoard().addPublicService(this.industry,this.goodsProduced)
   }
 }

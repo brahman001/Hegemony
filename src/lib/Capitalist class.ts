@@ -30,7 +30,7 @@ class CapitalistClass {
         CapitalistClass.instance = this;
     }
 
-    static getInstance(): CapitalistClass {
+    public static getInstance(): CapitalistClass {
         if (!CapitalistClass.instance) {
             CapitalistClass.instance = new CapitalistClass();
         }
@@ -43,5 +43,24 @@ class CapitalistClass {
 
     setScore(newScore: number): void {
         this.score = newScore;
+    }
+    addgoodsAndServices(industry: String, number: number) {
+        switch (industry) {
+            case 'Acriculture': 
+                this.goodsAndServices.Food += number;
+                break;
+            case 'Luxury':
+                this.goodsAndServices.Luxury += number;
+                break;
+            case 'Heathcare':
+                this.goodsAndServices.Health += number;
+                break;
+            case 'Education':
+                this.goodsAndServices.Education += number;
+                break;
+            case 'Media':
+                this.Influence += number;
+                break;
+        }
     }
 }

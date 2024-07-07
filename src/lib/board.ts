@@ -9,9 +9,9 @@ interface Policy {
 }
 
 interface PublicServices {
-  Health?: number;
-  Education?: number;
-  Influence?: number;
+  Health: number;
+  Education: number;
+  Influence: number;
 }
 
 interface BusinessDeal {
@@ -35,6 +35,7 @@ interface Import {
 }
 
 class Board {
+  private static instance: Board;
   private Policy: Policy;
   private StateTreasury: number;
   private PublicServices: PublicServices;
@@ -72,7 +73,12 @@ class Board {
       this.Export = Export;
       this.Import = Import;
   }
-
+  public static getBoard(): Board {
+    if (!Board.instance) {
+        Board.instance = new Board();
+    }
+    return Board.instance;
+}
   getPolicyInfo(): Policy {
       return this.Policy;
   }
@@ -96,17 +102,21 @@ class Board {
   getPublicServicesInfo(): PublicServices {
       return this.PublicServices;
   }
-  static addPublicService(industry:String,number:number){
-    switch(industry){
-          case 'Heathcare':
-            this.PublicServices.Health=+number;
-          case 'Education':
-            this.PublicServices.Education=+number;
-          case 'Media': 
-            this.PublicServices.Influence=+number;
+  addPublicService(industry: String, number: number) {
+    switch (industry) {
+        case 'Heathcare':
+            this.PublicServices.Health+= number;
+            break;
+        case 'Education':
+            this.PublicServices.Education += number;
+            break;
+        case 'Media': 
+            this.PublicServices.Influence += number;
+            break;
+        default:
+            throw new Error(`Industry type ${industry} does not exist`);
     }
-
-  }
+}
   updatePublicService(serviceType: keyof PublicServices, amount: number): void {
       if (this.PublicServices.hasOwnProperty(serviceType)) {
           this.PublicServices[serviceType]! += amount;
