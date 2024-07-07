@@ -96,7 +96,17 @@ class Board {
   getPublicServicesInfo(): PublicServices {
       return this.PublicServices;
   }
+  static addPublicService(industry:String,number:number){
+    switch(industry){
+          case 'Heathcare':
+            this.PublicServices.Health=+number;
+          case 'Education':
+            this.PublicServices.Education=+number;
+          case 'Media': 
+            this.PublicServices.Influence=+number;
+    }
 
+  }
   updatePublicService(serviceType: keyof PublicServices, amount: number): void {
       if (this.PublicServices.hasOwnProperty(serviceType)) {
           this.PublicServices[serviceType]! += amount;
