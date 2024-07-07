@@ -4,6 +4,7 @@ interface Population {
     Heathcare: number;
     Education: number;
     Media: number;
+    worker : worker[];
 }
 
 interface TradeUnions {
@@ -41,6 +42,7 @@ class WorkerClass {
             Heathcare: population.Heathcare || 0,
             Education: population.Education || 0,
             Media: population.Media || 0,
+            worker : [],
         };
         this.population_level = population_level;
         this.tradeUnions = {
