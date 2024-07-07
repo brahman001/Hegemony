@@ -76,5 +76,8 @@ class WorkerClass {
     setScore(newScore: number): void {
         this.score = newScore;
     }
+    addincome(number:number){
+        this.income+=number;
+    }
 }
 

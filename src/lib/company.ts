@@ -3,7 +3,7 @@
 type istateindustry = 'Heathcare' | 'Education' | 'Media';
 type Capitalistindustry = 'Acriculture' | 'Luxury' | 'Heathcare' | 'Education' | 'Media';
 interface Wages {
-  level: string;
+  level: 'L1' | 'L2' | 'L3';
   L1: number;
   L2: number;
   L3: number;
@@ -54,19 +54,24 @@ class CapitalistCompany extends Company {
       Bonus: machineryBonus.Bonus || 0,
     };
   }
-  production(industry: string){
-    if (this.machineryBonus.function){
-      CapitalistClass.getInstance().addgoodsAndServices(industry,this.machineryBonus.Bonus+this.goodsProduced)
+  production(industry: string) {
+    if (this.machineryBonus.function) {
+      CapitalistClass.getInstance().addgoodsAndServices(industry, this.machineryBonus.Bonus + this.goodsProduced);
     }
+    else {
+      CapitalistClass.getInstance().addgoodsAndServices(industry, this.goodsProduced);
     }
+    WorkerClass.getInstance().addincome(this.wages[this.wages.level]);
   }
+}
 
 class StateCompany extends Company {
 
   constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
     super(name, cost, industry, requiredWorkers, goodsProduced, wages);
   }
-  production(){
-    Board.getBoard().addPublicService(this.industry,this.goodsProduced)
+  production() {
+    Board.getBoard().addPublicService(this.industry, this.goodsProduced)
+    WorkerClass.getInstance().addincome(this.wages[this.wages.level]);
   }
 }
