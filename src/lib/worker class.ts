@@ -23,7 +23,7 @@ interface GoodsAndServices {
     Influence: number;
 }
 
-class WorkerClass {
+export class WorkerClass {
     private static instance: WorkerClass;
     private score: number;
     private population: Population;
@@ -64,14 +64,14 @@ class WorkerClass {
         };
     }
 
-    static getInstance(): WorkerClass {
+    public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
             WorkerClass.instance = new WorkerClass();
         }
         return WorkerClass.instance;
     }
 
-    getScore(): number {
+    public getScore(): number {
         return this.score;
     }
 
@@ -81,5 +81,7 @@ class WorkerClass {
     addincome(number:number){
         this.income+=number;
     }
+
+
 }
 
