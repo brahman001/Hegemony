@@ -4,7 +4,7 @@ interface Population {
     Heathcare: number;
     Education: number;
     Media: number;
-    worker : worker[];
+    worker : Worker[];
 }
 
 interface TradeUnions {
@@ -81,7 +81,7 @@ export class WorkerClass {
     addincome(number:number){
         this.income+=number;
     }
-
+    
 
 }
 

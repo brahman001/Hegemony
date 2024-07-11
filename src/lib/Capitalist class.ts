@@ -1,3 +1,4 @@
+import{CapitalistCompany} from './company'
 interface CapitalistGoodsAndServices {
     Food: number;
     Luxury: number;
@@ -5,7 +6,7 @@ interface CapitalistGoodsAndServices {
     Education: number;
 }
 
-class CapitalistClass {
+export class CapitalistClass {
     private static instance: CapitalistClass;
     private Company: CapitalistCompany[];
     private Revenue: number;

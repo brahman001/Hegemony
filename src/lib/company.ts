@@ -1,4 +1,5 @@
-
+import { WorkerClass } from "./worker class";
+import { CapitalistClass } from "./Capitalist class"
 
 type istateindustry = 'Heathcare' | 'Education' | 'Media';
 type Capitalistindustry = 'Acriculture' | 'Luxury' | 'Heathcare' | 'Education' | 'Media';
@@ -42,7 +43,7 @@ class Company {
 
   }
 }
-class CapitalistCompany extends Company {
+export class CapitalistCompany extends Company {
 
   machineryBonus: MachineryBonus;
 

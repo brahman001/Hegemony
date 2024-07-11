@@ -1,3 +1,5 @@
+import { WorkerClass } from "./worker class";
+
 interface Policy {
     Fiscal?: string;
     Labor?: string;
