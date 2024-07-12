@@ -4,7 +4,7 @@ interface Population {
     Heathcare: number;
     Education: number;
     Media: number;
-    worker : Worker[];
+    worker: Worker[];
 }
 
 interface TradeUnions {
@@ -22,8 +22,8 @@ interface GoodsAndServices {
     Education: number;
     Influence: number;
 }
-
-export class WorkerClass {
+import { EventEmitter } from 'events';
+export class WorkerClass extends EventEmitter {
     private static instance: WorkerClass;
     private score: number;
     private population: Population;
@@ -35,6 +35,7 @@ export class WorkerClass {
     private goodsAndServices: GoodsAndServices;
 
     private constructor(score: number = 0, population: Partial<Population> = {}, population_level: number = 0, income: number = 0, prosperity: number = 0, cooperativefarm: number = 0, goodsAndServices: Partial<GoodsAndServices> = {}) {
+        super();
         this.score = score;
         this.population = {
             Acriculture: population.Acriculture || 0,
@@ -42,12 +43,12 @@ export class WorkerClass {
             Heathcare: population.Heathcare || 0,
             Education: population.Education || 0,
             Media: population.Media || 0,
-            worker : [],
+            worker: [],
         };
         this.population_level = population_level;
         this.tradeUnions = {
-            Acriculture : false,
-            Luxury : false,
+            Acriculture: false,
+            Luxury: false,
             Heathcare: false,
             Education: false,
             Media: false,
@@ -71,17 +72,24 @@ export class WorkerClass {
         return WorkerClass.instance;
     }
 
-    public getScore(): number {
-        return this.score;
-    }
+
 
     setScore(newScore: number): void {
-        this.score = newScore;
+        this.score += newScore;
+        this.emit('update');
     }
-    addincome(number:number){
-        this.income+=number;
+    addincome(number: number) {
+        this.income += number;
+        this.emit('update');
     }
-    
+    mainaction() {
 
+    }
+    getincome() {
+        return this.income;
+    }
+    getScore() {
+        return this.score;
+    }
 }
 

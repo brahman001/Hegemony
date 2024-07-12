@@ -1,5 +1,6 @@
 import { WorkerClass } from "./worker class";
 import { CapitalistClass } from "./Capitalist class"
+import { Board } from "./board";
 
 type istateindustry = 'Heathcare' | 'Education' | 'Media';
 type Capitalistindustry = 'Acriculture' | 'Luxury' | 'Heathcare' | 'Education' | 'Media';
@@ -72,7 +73,7 @@ class StateCompany extends Company {
     super(name, cost, industry, requiredWorkers, goodsProduced, wages);
   }
   production() {
-    Board.getBoard().addPublicService(this.industry, this.goodsProduced)
+    Board.getInstance().addPublicService(this.industry, this.goodsProduced)
     WorkerClass.getInstance().addincome(this.wages[this.wages.level]);
   }
 }

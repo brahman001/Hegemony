@@ -16,14 +16,15 @@ interface PublicServices {
     Influence: number;
 }
 
-interface BusinessDeal {
+export interface BusinessDeal {
     item: string;
     amount: number;
     price: number;
     tax?: { [key: string]: number };
+    imageUrl: string;
 }
 
-interface Export {
+export interface Export {
     item: string;
     amount: number;
     price: number;
@@ -37,10 +38,10 @@ interface Import {
 }
 interface worker {
     class: WorkerClass;
-    perfortional: 'unskilled' ;
+    perfortional: 'unskilled';
 }
 
-class Board {
+export class Board {
     private static instance: Board;
     private Policy: Policy;
     private StateTreasury: number;
@@ -54,7 +55,7 @@ class Board {
         Policy: Partial<Policy> = {},
         StateTreasury: number = 120,
         PublicServices: Partial<PublicServices> = {},
-        BusinessDeal: BusinessDeal[] = [{ item: 'Luxury', amount: 0, price: 0, tax: { A: 10, B: 5, C: 2 } }],
+        BusinessDeal: BusinessDeal[] = [],
         Export: Export[] = [{ item: 'Food', amount: 0, price: 0 }],
         Import: Import[] = [
             { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
@@ -80,12 +81,26 @@ class Board {
         this.Export = Export;
         this.Import = Import;
     }
-    public static getBoard(): Board {
+    public static getInstance(): Board {
         if (!Board.instance) {
             Board.instance = new Board();
         }
         return Board.instance;
     }
+    Initialization() {
+        this.Policy.Fiscal = 'C';
+        this.Policy.Labor = 'B';
+        this.Policy.Taxation = 'A';
+        this.Policy.Health = 'B';
+        this.Policy.Education = 'C';
+        this.Policy.Foreign = 'B';
+        this.Policy.Immigration = 'B';
+        this.StateTreasury = 120;
+        this.PublicServices.Education = 5;
+        this.PublicServices.Health = 5;
+        this.PublicServices.Influence = 3;
+    };
+
     getPolicyInfo(): Policy {
         return this.Policy;
     }
