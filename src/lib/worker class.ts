@@ -71,9 +71,6 @@ export class WorkerClass extends EventEmitter {
         }
         return WorkerClass.instance;
     }
-
-
-
     setScore(newScore: number): void {
         this.score += newScore;
         this.emit('update');
@@ -81,9 +78,6 @@ export class WorkerClass extends EventEmitter {
     addincome(number: number) {
         this.income += number;
         this.emit('update');
-    }
-    mainaction() {
-
     }
     getincome() {
         return this.income;

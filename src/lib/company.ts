@@ -23,7 +23,7 @@ class Company {
   requiredWorkers: number;
   goodsProduced: number;
   wages: Wages;
-  oper: boolean;
+  imageUrl:string;
 
   constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
     this.name = name;
@@ -37,11 +37,7 @@ class Company {
       L2: wages.L2 || 0,
       L3: wages.L3 || 0,
     };
-    this.oper = false;
-  }
-
-  product() {
-
+    this.imageUrl = '';
   }
 }
 export class CapitalistCompany extends Company {
@@ -67,13 +63,8 @@ export class CapitalistCompany extends Company {
   }
 }
 
-class StateCompany extends Company {
-
+export class StateCompany extends Company {
   constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
     super(name, cost, industry, requiredWorkers, goodsProduced, wages);
-  }
-  production() {
-    Board.getInstance().addPublicService(this.industry, this.goodsProduced)
-    WorkerClass.getInstance().addincome(this.wages[this.wages.level]);
   }
 }

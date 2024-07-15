@@ -1,4 +1,5 @@
 import{CapitalistCompany} from './company'
+import { EventEmitter } from 'events';
 interface CapitalistGoodsAndServices {
     Food: number;
     Luxury: number;
@@ -6,7 +7,7 @@ interface CapitalistGoodsAndServices {
     Education: number;
 }
 
-export class CapitalistClass {
+export class CapitalistClass extends EventEmitter{
     private static instance: CapitalistClass;
     private Company: CapitalistCompany[];
     private Revenue: number;
@@ -16,6 +17,7 @@ export class CapitalistClass {
     private score: number;
 
     private constructor(score: number = 0, Company: CapitalistCompany[] = [], Revenue: number = 0, Capitalist: number = 120, goodsAndServices: Partial<CapitalistGoodsAndServices> = {}, Influence: number = 1) {
+        super();
         this.Company = Company.slice(0, 12);
         this.Revenue = Revenue;
         this.Capitalist = Capitalist;

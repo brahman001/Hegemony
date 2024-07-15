@@ -1,13 +1,14 @@
 import { WorkerClass } from "./worker class";
-
+import { EventEmitter } from 'events';
+import { StateCompany } from './company'
 interface Policy {
-    Fiscal?: string;
-    Labor?: string;
-    Taxation?: string;
-    Health?: string;
-    Education?: string;
-    Foreign?: string;
-    Immigration?: string;
+    Fiscal: string;
+    Labor: string;
+    Taxation: string;
+    Health: string;
+    Education: string;
+    Foreign: string;
+    Immigration: string;
 }
 
 interface PublicServices {
@@ -40,46 +41,62 @@ interface worker {
     class: WorkerClass;
     perfortional: 'unskilled';
 }
-
-export class Board {
+interface VotingRules {
+    [key: string]: string[];
+}
+export class Board extends EventEmitter {
+    private mainaction: Boolean;
+    private freeaction: Boolean;
     private static instance: Board;
     private Policy: Policy;
     private StateTreasury: number;
     private PublicServices: PublicServices;
-    private BusinessDeal: BusinessDeal[];
+    private BusinessDeal: BusinessDeal;
     private Export: Export[];
     private Import: Import[];
     private unempolyedworker: Worker[] = [];
-
-    constructor(
-        Policy: Partial<Policy> = {},
-        StateTreasury: number = 120,
-        PublicServices: Partial<PublicServices> = {},
-        BusinessDeal: BusinessDeal[] = [],
-        Export: Export[] = [{ item: 'Food', amount: 0, price: 0 }],
-        Import: Import[] = [
-            { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
-            { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
-        ]
-    ) {
+    private StateCompany: StateCompany[] = [];
+    private PolicyVoting: Policy;
+    private votingRules: VotingRules;
+    constructor() {
+        super();
+        this.mainaction = false;
+        this.freeaction = false;
         this.Policy = {
-            Fiscal: Policy.Fiscal || 'C',
-            Labor: Policy.Labor || 'B',
-            Taxation: Policy.Taxation || 'A',
-            Health: Policy.Health || 'B',
-            Education: Policy.Education || 'C',
-            Foreign: Policy.Foreign || 'B',
-            Immigration: Policy.Immigration || 'B',
+            Fiscal: 'C',
+            Labor: 'B',
+            Taxation: 'A',
+            Health: 'B',
+            Education: 'C',
+            Foreign: 'B',
+            Immigration: 'B',
         };
-        this.StateTreasury = StateTreasury;
-        this.PublicServices = {
-            Health: PublicServices.Health || 6,
-            Education: PublicServices.Education || 6,
-            Influence: PublicServices.Influence || 4,
+        this.Export = [{ item: 'Food', amount: 0, price: 0 }],
+            this.Import = [
+                { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
+                { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
+            ]
+        this.StateTreasury = 120,
+            this.PublicServices = {
+                Health: 6,
+                Education: 6,
+                Influence: 4,
+            };
+        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.PolicyVoting = {
+            Fiscal: '',
+            Labor: '',
+            Taxation: '',
+            Health: '',
+            Education: '',
+            Foreign: '',
+            Immigration: '',
         };
-        this.BusinessDeal = BusinessDeal;
-        this.Export = Export;
-        this.Import = Import;
+        this.votingRules = {
+            A: ['B'],  // 当评级为A时，只能投B
+            B: ['A', 'C'],  // 当评级为B时，可以投A或C
+            C: ['B']  // 当评级为C时，只能投B
+        };
     }
     public static getInstance(): Board {
         if (!Board.instance) {
@@ -87,6 +104,8 @@ export class Board {
         }
         return Board.instance;
     }
+
+
     Initialization() {
         this.Policy.Fiscal = 'C';
         this.Policy.Labor = 'B';
@@ -99,12 +118,9 @@ export class Board {
         this.PublicServices.Education = 5;
         this.PublicServices.Health = 5;
         this.PublicServices.Influence = 3;
+        this.setBusinessDeal();
+        this.setcompany();
     };
-
-    getPolicyInfo(): Policy {
-        return this.Policy;
-    }
-
     setPolicy(policyType: keyof Policy, policyValue: string): void {
         if (this.Policy.hasOwnProperty(policyType)) {
             this.Policy[policyType] = policyValue;
@@ -112,18 +128,10 @@ export class Board {
             throw new Error(`Policy type ${policyType} does not exist`);
         }
     }
-
-    getStateTreasury(): number {
-        return this.StateTreasury;
-    }
-
     updateStateTreasury(amount: number): void {
         this.StateTreasury += amount;
     }
 
-    getPublicServicesInfo(): PublicServices {
-        return this.PublicServices;
-    }
     addPublicService(industry: String, number: number) {
         switch (industry) {
             case 'Heathcare':
@@ -146,34 +154,20 @@ export class Board {
             throw new Error(`Public service type ${serviceType} does not exist`);
         }
     }
-
-    getBusinessDealInfo(): BusinessDeal[] {
-        return this.BusinessDeal;
-    }
-
-    addBusinessDeal(item: string, amount: number, price: number): void {
-        this.BusinessDeal.push({ item, amount, price });
-    }
-
-    getExportInfo(): Export[] {
-        return this.Export;
-    }
-
     addExport(item: string, amount: number, price: number): void {
         this.Export.push({ item, amount, price });
-    }
-
-    getImportInfo(): Import[] {
-        return this.Import;
+        this.emit('update');
     }
 
     addImport(item: string, amount: number, price: number): void {
         this.Import.push({ item, amount, price });
+        this.emit('update', `Export added: ${item}, Amount: ${amount}, Price: $${price}`);
     }
 
     getBoardInfo() {
         return {
             Policy: this.Policy,
+            PolicyVoting: this.PolicyVoting,
             StateTreasury: this.StateTreasury,
             PublicServices: this.PublicServices,
             BusinessDeal: this.BusinessDeal,
@@ -181,4 +175,57 @@ export class Board {
             Import: this.Import,
         };
     }
+    setBusinessDeal() {
+        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.emit('update');
+    }
+    getcompany() {
+        return this.StateCompany;
+    }
+    setcompany() {
+        if (this.Policy.Fiscal = 'A') {
+            this.StateCompany = [StateCompanys[0], StateCompanys[3], StateCompanys[6]];
+
+        }
+        else if (this.Policy.Fiscal = 'B') {
+            this.StateCompany = [StateCompanys[0], StateCompanys[1], StateCompanys[3], StateCompanys[4], StateCompanys[6], StateCompanys[7]];
+        }
+        else {
+            this.StateCompany = StateCompanys;
+        }
+        this.emit('update');
+    }
+    voting(policy: keyof Policy, votingAim: string) {
+
+        if (this.Policy.hasOwnProperty(policy)) {
+            const currentGrade = this.Policy[policy];
+            if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
+                this.PolicyVoting[policy] = votingAim;
+                this.emit('update');
+            } else {
+                this.emit('update', `Invalid policy: ${policy}`)
+            }
+        } else {
+            this.emit('voteError', `Invalid policy: ${policy}`);
+        }
+    }
 }
+const BusinessDealcards: BusinessDeal[] = [
+    { item: "Food", amount: 6, price: 40, tax: { "A": 12, "B": 6, "C": 0 }, imageUrl: "/6food.jpg" },
+    { item: "Food", amount: 7, price: 50, tax: { "A": 14, "B": 7, "C": 0 }, imageUrl: "/7food.jpg" },
+    { item: "Food", amount: 8, price: 55, tax: { "A": 16, "B": 8, "C": 0 }, imageUrl: "/8food.jpg" },
+    { item: "Luxury", amount: 8, price: 30, tax: { "A": 16, "B": 8, "C": 0 }, imageUrl: "/8Luxury.jpg" },
+    { item: "Luxury", amount: 10, price: 40, tax: { "A": 20, "B": 10, "C": 0 }, imageUrl: "/10Luxury.jpg" },
+    { item: "Luxury", amount: 12, price: 50, tax: { "A": 24, "B": 12, "C": 0 }, imageUrl: "/12Luxury.jpg" },
+];
+const StateCompanys: StateCompany[] = [
+    { name: "UNIVERSITY_3", cost: 30, industry: 'Education', requiredWorkers: 3, goodsProduced: 6, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/University_3.jpg" },
+    { name: "UNIVERSITY_2", cost: 20, industry: 'Education', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/University_2.jpg" },
+    { name: "UNIVERSITY_1", cost: 20, industry: 'Education', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/University_1.jpg" },
+    { name: "HOSPITAL_3", cost: 30, industry: 'Healthcare', requiredWorkers: 3, goodsProduced: 6, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/Hospital_3.jpg" },
+    { name: "HOSPITAL_2", cost: 20, industry: 'Healthcare', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/Hospital_2.jpg" },
+    { name: "HOSPITAL_1", cost: 20, industry: 'Healthcare', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/Hospital_1.jpg" },
+    { name: "TV STATION_3", cost: 30, industry: 'Media', requiredWorkers: 4, goodsProduced: 4, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/TVStation_High_3.jpg" },
+    { name: "TV STATION_2", cost: 20, industry: 'Media', requiredWorkers: 2, goodsProduced: 3, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/TVStation_2.jpg" },
+    { name: "TV STATION_1", cost: 20, industry: 'Media', requiredWorkers: 2, goodsProduced: 3, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/TVStation_1.jpg" },
+]
