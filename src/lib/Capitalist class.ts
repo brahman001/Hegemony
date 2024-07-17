@@ -1,4 +1,4 @@
-import{CapitalistCompany} from './company'
+import { CapitalistCompany } from './company'
 import { EventEmitter } from 'events';
 interface CapitalistGoodsAndServices {
     Food: number;
@@ -7,7 +7,7 @@ interface CapitalistGoodsAndServices {
     Education: number;
 }
 
-export class CapitalistClass extends EventEmitter{
+export class CapitalistClass extends EventEmitter {
     private static instance: CapitalistClass;
     private Company: CapitalistCompany[];
     private Revenue: number;
@@ -15,41 +15,51 @@ export class CapitalistClass extends EventEmitter{
     private goodsAndServices: CapitalistGoodsAndServices;
     private Influence: number;
     private score: number;
+    private loan: number;
 
-    private constructor(score: number = 0, Company: CapitalistCompany[] = [], Revenue: number = 0, Capitalist: number = 120, goodsAndServices: Partial<CapitalistGoodsAndServices> = {}, Influence: number = 1) {
+    private constructor() {
         super();
-        this.Company = Company.slice(0, 12);
-        this.Revenue = Revenue;
-        this.Capitalist = Capitalist;
+        this.Company = [];
+        this.Revenue = 0;
+        this.Capitalist = 120;
         this.goodsAndServices = {
-            Food: goodsAndServices.Food || 0,
-            Luxury: goodsAndServices.Luxury || 0,
-            Health: goodsAndServices.Health || 0,
-            Education: goodsAndServices.Education || 0,
+            Food: 0,
+            Luxury: 0,
+            Health: 0,
+            Education: 0,
         };
-        this.Influence = Influence;
-        this.score = score;
-
-        CapitalistClass.instance = this;
+        this.Influence = 1;
+        this.score = 0;
+        this.loan = 0;
     }
 
     public static getInstance(): CapitalistClass {
         if (!CapitalistClass.instance) {
-            CapitalistClass.instance = new CapitalistClass();
+            const saveddata = localStorage.getItem('CapitalistClass');
+            if (saveddata) {
+                CapitalistClass.instance = new CapitalistClass();
+                CapitalistClass.instance.SetCapitalistClass(JSON.parse(saveddata));
+            } else {
+                CapitalistClass.instance = new CapitalistClass();
+            }
         }
         return CapitalistClass.instance;
     }
-
-    getScore(): number {
-        return this.score;
+    SetCapitalistClass(data: CapitalistClass) {
+        this.Company = data.Company;
+        this.Revenue = data.Revenue;
+        this.Capitalist = data.Capitalist;
+        this.goodsAndServices = data.goodsAndServices;
+        this.Influence = data.Influence;
+        this.score = data.score;
+        this.loan = data.loan;
     }
-
     setScore(newScore: number): void {
         this.score = newScore;
     }
     addgoodsAndServices(industry: String, number: number) {
         switch (industry) {
-            case 'Acriculture': 
+            case 'Acriculture':
                 this.goodsAndServices.Food += number;
                 break;
             case 'Luxury':
@@ -65,5 +75,16 @@ export class CapitalistClass extends EventEmitter{
                 this.Influence += number;
                 break;
         }
+    }
+    getCapitalistInfo() {
+        return {
+            Score: this.score,
+            Company: this.Company,
+            Revenue: this.Revenue,
+            Capitalist: this.Capitalist,
+            goodsAndServices: this.goodsAndServices,
+            Influence: this.Influence,
+            loan: this.loan,
+        };
     }
 }

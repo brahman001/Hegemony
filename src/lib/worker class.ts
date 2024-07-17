@@ -5,6 +5,12 @@ interface Population {
     Education: number;
     Media: number;
     worker: Worker[];
+    population_level: number;
+}
+
+interface Worker {
+    skill: string;
+    location: string;
 }
 
 interface TradeUnions {
@@ -23,11 +29,11 @@ interface GoodsAndServices {
     Influence: number;
 }
 import { EventEmitter } from 'events';
+import { workerData } from 'worker_threads';
 export class WorkerClass extends EventEmitter {
     private static instance: WorkerClass;
     private score: number;
     private population: Population;
-    private population_level: number;
     private tradeUnions: TradeUnions;
     private income: number;
     private prosperity: number;
@@ -35,19 +41,19 @@ export class WorkerClass extends EventEmitter {
     private goodsAndServices: GoodsAndServices;
     private loan: number;
 
-    private constructor(score: number = 0, population: Partial<Population> = {}, population_level: number = 0, income: number = 0, prosperity: number = 0, cooperativefarm: number = 0, goodsAndServices: Partial<GoodsAndServices> = {}) {
+    private constructor() {
         super();
         this.loan = 0;
-        this.score = score;
+        this.score = 0;
         this.population = {
-            Acriculture: population.Acriculture || 0,
-            Luxury: population.Luxury || 0,
-            Heathcare: population.Heathcare || 0,
-            Education: population.Education || 0,
-            Media: population.Media || 0,
+            Acriculture: 0,
+            Luxury: 0,
+            Heathcare: 0,
+            Education: 0,
+            Media: 0,
             worker: [],
+            population_level: 3,
         };
-        this.population_level = population_level;
         this.tradeUnions = {
             Acriculture: false,
             Luxury: false,
@@ -55,24 +61,50 @@ export class WorkerClass extends EventEmitter {
             Education: false,
             Media: false,
         };
-        this.income = income;
-        this.prosperity = prosperity;
-        this.cooperativefarm = cooperativefarm;
+        this.income = 0;
+        this.prosperity = 0;
+        this.cooperativefarm = 0;
         this.goodsAndServices = {
-            Food: goodsAndServices.Food || 0,
-            Luxury: goodsAndServices.Luxury || 0,
-            Health: goodsAndServices.Health || 0,
-            Education: goodsAndServices.Education || 0,
-            Influence: goodsAndServices.Influence || 0,
+            Food: 0,
+            Luxury: 0,
+            Health: 0,
+            Education: 0,
+            Influence: 0,
         };
     }
 
     public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
-            WorkerClass.instance = new WorkerClass();
+            const saveddata = localStorage.getItem('WorkerClass');
+            if (saveddata) {
+                WorkerClass.instance = new WorkerClass();
+                WorkerClass.instance.SetWorkerClass(JSON.parse(saveddata));
+            } else {
+                WorkerClass.instance = new WorkerClass();
+            }
         }
         return WorkerClass.instance;
     }
+
+    SetWorkerClass(data: WorkerClass) {
+        this.loan = data.loan;
+        this.score = data.score;
+        this.population = data.population;
+        this.tradeUnions = data.tradeUnions;
+        this.income = data.income;
+        this.prosperity = data.prosperity;
+        this.cooperativefarm = data.cooperativefarm;
+        this.goodsAndServices = data.goodsAndServices;
+    }
+
+
+
+
+    addWorker(skill: string, location: string) {
+        this.population.worker.push({ skill, location });
+        this.emit('update');
+    }
+
     setScore(newScore: number): void {
         this.score += newScore;
         this.emit('update');
@@ -81,17 +113,15 @@ export class WorkerClass extends EventEmitter {
         this.income += number;
         this.emit('update');
     }
-    getgoodsAndServices() {
-        return this.goodsAndServices;
-    }
-    gettradeUnions() {
-        return this.tradeUnions;
-    }
-    getincome() {
-        return this.income;
-    }
-    getScore() {
-        return this.score;
+    getworkingclassInfo() {
+        return {
+            population: this.population,
+            goodsAndServices: this.goodsAndServices,
+            tradeUnions: this.tradeUnions,
+            income: this.income,
+            score: this.score,
+            loan: this.loan,
+        };
     }
 }
 

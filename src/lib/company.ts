@@ -67,4 +67,5 @@ export class StateCompany extends Company {
   constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
     super(name, cost, industry, requiredWorkers, goodsProduced, wages);
   }
+  
 }
