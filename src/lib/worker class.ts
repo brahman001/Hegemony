@@ -33,9 +33,11 @@ export class WorkerClass extends EventEmitter {
     private prosperity: number;
     private cooperativefarm: number;
     private goodsAndServices: GoodsAndServices;
+    private loan: number;
 
     private constructor(score: number = 0, population: Partial<Population> = {}, population_level: number = 0, income: number = 0, prosperity: number = 0, cooperativefarm: number = 0, goodsAndServices: Partial<GoodsAndServices> = {}) {
         super();
+        this.loan = 0;
         this.score = score;
         this.population = {
             Acriculture: population.Acriculture || 0,
@@ -78,6 +80,12 @@ export class WorkerClass extends EventEmitter {
     addincome(number: number) {
         this.income += number;
         this.emit('update');
+    }
+    getgoodsAndServices() {
+        return this.goodsAndServices;
+    }
+    gettradeUnions() {
+        return this.tradeUnions;
     }
     getincome() {
         return this.income;

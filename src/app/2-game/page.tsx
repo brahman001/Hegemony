@@ -6,6 +6,7 @@ import { WorkerClass } from '../../lib/worker class';
 import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board } from '@/lib/board';
 import Image from 'next/image'
+import { workerData } from 'worker_threads';
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -21,6 +22,14 @@ interface Action {
 interface Actions {
   basic: Action[];
   free: Action[];
+}
+interface VotingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  name: keyof Board["Policy"];
+}
+interface ActionToggleProps {
+  onActionComplete: () => void;
 }
 
 export default function Process() {
@@ -51,15 +60,13 @@ function GameRun() {
   // 监听turns，当达到最大turn数时进行处理
   useEffect(() => {
     if (gameState.currentTurn > gameState.maxTurns) {
-      // 可以在这里处理游戏终止逻辑，例如显示游戏结束的消息、计算最终分数等
-      console.log('Game Over');
+      alert('Game Over');
     }
   }, [gameState.currentTurn, gameState.maxTurns]);
 
   const handleNextRound = () => {
     if (gameState.phase === 'Production') {
-      // 生产阶段结束后重置回合计数，开始新的游戏回合
-      if (gameState.currentTurn < gameState.maxTurns) {
+      if (gameState.currentTurn <= gameState.maxTurns) {
         setGameState(prev => ({
           ...prev,
           currentTurn: prev.currentTurn + 1,
@@ -67,29 +74,34 @@ function GameRun() {
           phase: 'Action'
         }));
       }
+      setActionCompleted(false);
     } else {
       setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1 }));
-
+      setActionCompleted(false);
     }
   };
   const [actionCompleted, setActionCompleted] = useState(false);
-  const handleActionComplete = () => {
-    setActionCompleted(true);  // 设置操作已完成
-  };
-
   return (
     <div>
       <p>Phase: {gameState.phase}</p>
       <p>Turn: {gameState.currentTurn}</p>
       <p>Round: {gameState.currentRound}</p>
-      <ActionToggle />
+      <ActionToggle onActionComplete={() => setActionCompleted(true)} />
       {actionCompleted && <button onClick={handleNextRound}>Next Round</button>}
     </div>
   );
 }
-function ActionToggle() {
-  const [activePath, setActivePath] = useState<number[]>([]);
 
+
+
+const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
+  const [activePath, setActivePath] = useState<number[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [votingName, setVotingName] = useState('');
+  const openModalWithVoting = (name: string) => {
+    setModalOpen(true);
+    setVotingName(name);
+  };
   const actions: Actions = {
     basic: [
       {
@@ -97,25 +109,36 @@ function ActionToggle() {
         subActions: [
           {
             label: 'Fiscal',
-            subActions: [
-              { label: 'A',onClick: () =>{Board.getInstance().voting('Fiscal','A')}},
-              { label: 'B' ,onClick: () =>{Board.getInstance().voting('Fiscal','B')}},
-              { label: 'C' ,onClick: () =>{Board.getInstance().voting('Fiscal','C')}},
-            ]
+            onClick: () => openModalWithVoting('Fiscal'),
           },
-          { label: 'Sub Action 1-2' }
+          {
+            label: 'Labor',
+            onClick: () => openModalWithVoting('Labor')
+          },
+          {
+            label: 'Taxation',
+            onClick: () => openModalWithVoting('Taxation')
+          },
+          {
+            label: 'Health',
+            onClick: () => openModalWithVoting('Health')
+          },
+          {
+            label: 'Education',
+            onClick: () => openModalWithVoting('Education')
+          },
+          {
+            label: 'Foreign',
+            onClick: () => openModalWithVoting('Foreign')
+          },
+          {
+            label: 'Immigration',
+            onClick: () => openModalWithVoting('Immigration')
+          }
         ]
       },
       {
-        label: 'Basic Action 2', subActions: [
-          {
-            label: 'Sub Fiscal 13', subActions: [
-              { label: 'Sub Fiscal 14' },
-              { label: 'Sub Fiscal 25' }
-            ]
-          },
-          { label: 'Sub Fiscal 24' }
-        ]
+        label: 'Propose Bill'
       }
     ],
     free: [
@@ -125,60 +148,58 @@ function ActionToggle() {
   };
 
   const handleActionClick = (path: number[], action: Action) => {
-      // 如果存在 onClick 函数，先执行它
-      if (action.onClick) {
-        action.onClick();
-      }
-    
-      // 然后设置活动路径以展开或折叠子菜单
-      if (action.subActions) {
-        if (activePath.join(',') === path.join(',')) {
-          // 如果当前路径已激活，则点击意味着折叠
-          setActivePath(path.slice(0, -1));
-        } else {
-          // 否则展开子菜单
-          setActivePath(path);
-        }
+    if (action.onClick) {
+      action.onClick();
+    }
+    // Submenu toggle logic
+    if (action.subActions) {
+      if (activePath.join(',') === path.join(',')) {
+        setActivePath(path.slice(0, -1));
       } else {
-        // 如果没有子菜单，只执行 onClick 并可能重置路径
-        setActivePath([]);
+        setActivePath(path);
       }
-    };
-  
+    } else {
+      setActivePath([]);
+    }
+  };
 
   const renderActions = (actionList: Action[], path: number[] = []) => {
-      return actionList.map((action, index) => {
-        const currentPath = [...path, index]; 
-        const isActive = activePath.length >= currentPath.length && activePath.slice(0, currentPath.length).join(',') === currentPath.join(',');
-        console.log(`Passing down path: [${currentPath.join(',')}] for ${action.label}`);
-        console.log(`Active path: [${activePath.join(',')}]`, `Current path: [${currentPath.join(',')}]`, `Is active? ${isActive}`);
-    
-        return (
-          <div key={index}>
-            <button onClick={() => handleActionClick(currentPath, action)}>{action.label}</button>
+    return actionList.map((action, index) => {
+      const currentPath = [...path, index];
+      const isActive = activePath.length >= currentPath.length && activePath.slice(0, currentPath.length).join(',') === currentPath.join(',');
 
-            {isActive && action.subActions && (
-              <div style={{ marginLeft: '20px' }}>
-                {renderActions(action.subActions, currentPath)}
-              </div>
-            )}
-          </div>
-        );
-      });
-    };
-    
+      return (
+        <div key={index}>
+          <button onClick={() => handleActionClick(currentPath, action)}>{action.label}</button>
+          {isActive && action.subActions && (
+            <div style={{ marginLeft: '20px' }}>
+              {renderActions(action.subActions, currentPath)}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
 
   return (
     <div>
-      {Object.entries(actions).map(([key, actionList], index) => (
-        <div key={key}>
-          <h3>{key.charAt(0).toUpperCase() + key.slice(1)} Actions</h3>
-          {renderActions(actionList)}
-        </div>
-      ))}
+      <>
+        {Object.entries(actions).map(([key, actionList], index) => (
+          <div key={key}>
+            <h3>{key.charAt(0).toUpperCase() + key.slice(1)} Actions</h3>
+            {renderActions(actionList)}
+          </div>
+        ))}
+      </>
+      <VotingModal 
+        isOpen={isModalOpen} 
+        onClose={() => setModalOpen(false)} 
+        onSuccess={onActionComplete} 
+        name={votingName} 
+      />
     </div>
   );
-}
+};
 
 // function MultiplayerGameActions() {
 //   const [playerStatus, setPlayerStatus] = useState({
@@ -248,12 +269,12 @@ function DataTable() {
         board: boardInstance,
       });
     };
-    
+
 
     // 为每个实例添加更新事件监听器
-    workerInstance.on('update',(msg) => setMessage(msg), updateData);
-    capitalistInstance.on('update',(msg) => setMessage(msg), updateData);
-    boardInstance.on('update',(msg) => setMessage(msg), updateData);
+    workerInstance.on('update', (msg) => setMessage(msg), updateData);
+    capitalistInstance.on('update', (msg) => setMessage(msg), updateData);
+    boardInstance.on('update', (msg) => setMessage(msg), updateData);
 
     // 清除事件监听器的函数
     return () => {
@@ -264,23 +285,43 @@ function DataTable() {
   }, []); // 空依赖数组意味着这个 effect 只在组件挂载时运行一次
 
   return (
-    <><table className="table table-borderless">
-      <thead>
-        <tr>
-          <th scope="col">Income</th>
-          <th scope="col">Score</th>
-          <th scope="col">Handle</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{data.workercalss.getincome()}</td>
-          <td>{data.workercalss.getScore()}</td>
-          <td>@mdo</td>
-        </tr>
-      </tbody>
-    </table>
-      <table className="table table-borderless">
+    <><h1 className="container text-center">workercalss</h1>
+      <table className="table table-striped table-bordered">
+        <thead>
+          <tr className="container text-center">
+            <th>Income</th>
+            <th>Score</th>
+            <th>food</th>
+            <th>Luxury</th>
+            <th>Education</th>
+            <th>Health</th>
+            <th>Influence</th>
+            <th>Agriculture-Trade unions</th>
+            <th >Luxury-Trade unions</th>
+            <th >Healthcare-Trade unions</th>
+            <th >Education-Trade unions</th>
+            <th >Media-Trade unions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="container text-center">
+            <td className="col">{data.workercalss.getincome()}</td>
+            <td className="col">{data.workercalss.getScore()}</td>
+            <td className="col">{data.workercalss.getgoodsAndServices().Food}</td>
+            <td className="col">{data.workercalss.getgoodsAndServices().Luxury}</td>
+            <td className="col">{data.workercalss.getgoodsAndServices().Education}</td>
+            <td className="col">{data.workercalss.getgoodsAndServices().Health}</td>
+            <td className="col">{data.workercalss.getgoodsAndServices().Influence}</td>
+            <td className="col">{data.workercalss.gettradeUnions().Acriculture? '有' : '没有'}</td>
+            <td className="col">{data.workercalss.gettradeUnions().Luxury? '有' : '没有'}</td>
+            <td className="col">{data.workercalss.gettradeUnions().Heathcare? '有' : '没有'}</td>
+            <td className="col">{data.workercalss.gettradeUnions().Education? '有' : '没有'}</td>
+            <td className="col">{data.workercalss.gettradeUnions().Media? '有' : '没有'}</td>
+          </tr>
+        </tbody>
+      </table>
+      <h1 className="container text-center">State</h1>
+      <table className="table table-striped table-bordered">
         <thead>
           <tr>
             <th scope="col">Deal</th>
@@ -300,50 +341,66 @@ function DataTable() {
           </tr>
         </tbody>
       </table>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'start'
-      }}>
-        <h3>State Companies</h3>
+      <table className="table table-striped table-bordered">
+      <thead>
+        <tr>
+        <th scope="col"></th>
+          <th scope="col">Fiscal</th>
+          <th scope="col">Labor</th>
+          <th scope="col">Taxation</th>
+          <th scope="col">Education</th>
+          <th scope="col">Foreign</th>
+          <th scope="col">Immigration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+        <th scope="col">now</th>
+          <td>{data.board.getBoardInfo().Policy.Fiscal}</td>
+          <td>{data.board.getBoardInfo().Policy.Labor}</td>
+          <td>{data.board.getBoardInfo().Policy.Taxation}</td>
+          <td>{data.board.getBoardInfo().Policy.Education}</td>
+          <td>{data.board.getBoardInfo().Policy.Foreign}</td>
+          <td>{data.board.getBoardInfo().Policy.Immigration}</td>
+        </tr>
+        <tr>
+          <th scope="col">bill</th>
+          <td>{data.board.getBoardInfo().PolicyVoting.Fiscal}</td>
+          <td>{data.board.getBoardInfo().PolicyVoting.Labor}</td>
+          <td>{data.board.getBoardInfo().PolicyVoting.Taxation}</td>
+          <td>{data.board.getBoardInfo().PolicyVoting.Education}</td>
+          <td>{data.board.getBoardInfo().PolicyVoting.Foreign}</td>
+          <td>{data.board.getBoardInfo().PolicyVoting.Immigration}</td>
+        </tr>
+      </tbody>
+    </table>
+        <h3 className="container text-center">State Companies</h3>
         {data.board.getcompany().map((company, index) => (
           <p key={index}>
             <Image src={company.imageUrl} alt="Description of Image 1" width={100} height={100} />
           </p>
         ))}
+        <h1 className="container text-center">capitalistClass</h1>
         <table className="table table-borderless">
-          <thead>
-            <tr>
-              <th scope="col">Fiscal</th>
-              <th scope="col">Labor</th>
-              <th scope="col">Taxation</th>
-              <th scope="col">Education</th>
-              <th scope="col">Foreign</th>
-              <th scope="col">Immigration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{data.board.getBoardInfo().Policy.Fiscal}</td>
-              <td>{data.board.getBoardInfo().Policy.Labor}</td>
-              <td>{data.board.getBoardInfo().Policy.Taxation}</td>
-              <td>{data.board.getBoardInfo().Policy.Education}</td>
-              <td>{data.board.getBoardInfo().Policy.Foreign}</td>
-              <td>{data.board.getBoardInfo().Policy.Immigration}</td>
-            </tr>
-            <tr>
-              <td>{data.board.getBoardInfo().PolicyVoting.Fiscal}</td>
-              <td>{data.board.getBoardInfo().PolicyVoting.Labor}</td>
-              <td>{data.board.getBoardInfo().PolicyVoting.Taxation}</td>
-              <td>{data.board.getBoardInfo().PolicyVoting.Education}</td>
-              <td>{data.board.getBoardInfo().PolicyVoting.Foreign}</td>
-              <td>{data.board.getBoardInfo().PolicyVoting.Immigration}</td>
-            </tr>
-          </tbody>
+        <thead>
+          <tr>
+            <th scope="col">Deal</th>
+            <th scope="col">Score</th>
+            <th scope="col">Heath</th>
+            <th scope="col">education</th>
+            <th scope="col">influence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><Image src={Board.getInstance().getBoardInfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
+            <td>{data.board.getBoardInfo().StateTreasury}</td>
+            <td>{data.board.getBoardInfo().PublicServices.Health}</td>
+            <td>{data.board.getBoardInfo().PublicServices.Education}</td>
+            <td>{data.board.getBoardInfo().PublicServices.Influence}</td>
+          </tr>
+        </tbody>
         </table>
-      </div>
     </>
   );
 }
@@ -354,3 +411,78 @@ function initialization() {
   //WorkerClass.().initialization();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const VotingModal: React.FC<{ isOpen: boolean, onClose: () => void, onSuccess: () => void, name: string }> = ({ isOpen, onClose, onSuccess, name }) => {
+  if (!isOpen) return null;
+
+  const handleVote = (option: string) => {
+    Board.getInstance().voting(
+      name,
+      option,
+      () => {
+        onSuccess(); // 投票成功
+        onClose();
+      },
+      (error) => {
+        alert(error); // 投票失败
+      }
+    );
+  };
+
+  return (
+    <>
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: 99
+      }} />
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: 'white',
+        padding: '20px',
+        border: '1px solid black',
+        zIndex: 100
+      }}>
+        <div>{name}'s 当前政策{Board.getInstance().getBoardInfo().Policy[name]}</div>
+        <div>
+          <button onClick={() => handleVote('A')}>A</button>
+          <button onClick={() => handleVote('B')}>B</button>
+          <button onClick={() => handleVote('C')}>C</button>
+        </div>
+        <button onClick={onClose}>Close</button>
+      </div>
+    </>
+  );
+};

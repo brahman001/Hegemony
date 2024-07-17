@@ -93,9 +93,9 @@ export class Board extends EventEmitter {
             Immigration: '',
         };
         this.votingRules = {
-            A: ['B'],  // 当评级为A时，只能投B
-            B: ['A', 'C'],  // 当评级为B时，可以投A或C
-            C: ['B']  // 当评级为C时，只能投B
+            A: ['B'],
+            B: ['A', 'C'], 
+            C: ['B'] ,
         };
     }
     public static getInstance(): Board {
@@ -195,21 +195,26 @@ export class Board extends EventEmitter {
         }
         this.emit('update');
     }
-    voting(policy: keyof Policy, votingAim: string) {
-
+    
+    voting(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
-            const currentGrade = this.Policy[policy];
-            if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
-                this.PolicyVoting[policy] = votingAim;
-                this.emit('update');
-            } else {
-                this.emit('update', `Invalid policy: ${policy}`)
-            }
+          const currentGrade = this.Policy[policy];
+          if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
+            this.PolicyVoting[policy] = votingAim;
+            this.emit('update');
+            onSuccess();
+          } else {
+            const errorMessage = `Invalid voting aim or policy already voted: ${policy}`;
+            this.emit('update', errorMessage);
+            onError(errorMessage);
+          }
         } else {
-            this.emit('voteError', `Invalid policy: ${policy}`);
+          const errorMessage = `Invalid policy: ${policy}`;
+          this.emit('voteError', errorMessage);
+          onError(errorMessage); 
         }
+      }
     }
-}
 const BusinessDealcards: BusinessDeal[] = [
     { item: "Food", amount: 6, price: 40, tax: { "A": 12, "B": 6, "C": 0 }, imageUrl: "/6food.jpg" },
     { item: "Food", amount: 7, price: 50, tax: { "A": 14, "B": 7, "C": 0 }, imageUrl: "/7food.jpg" },
