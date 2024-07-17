@@ -87,4 +87,18 @@ export class CapitalistClass extends EventEmitter {
             loan: this.loan,
         };
     }
+    Initialization(){
+        this.Company = [];
+        this.Revenue = 0;
+        this.Capitalist = 120;
+        this.goodsAndServices = {
+            Food: 0,
+            Luxury: 0,
+            Health: 0,
+            Education: 0,
+        };
+        this.Influence = 1;
+        this.score = 0;
+        this.loan = 0;
+    }
 }

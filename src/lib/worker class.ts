@@ -85,7 +85,36 @@ export class WorkerClass extends EventEmitter {
         }
         return WorkerClass.instance;
     }
-
+    Initialization() {
+        this.loan = 0;
+        this.score = 0;
+        this.population = {
+            Acriculture: 0,
+            Luxury: 0,
+            Heathcare: 0,
+            Education: 0,
+            Media: 0,
+            worker: [],
+            population_level: 3,
+        };
+        this.tradeUnions = {
+            Acriculture: false,
+            Luxury: false,
+            Heathcare: false,
+            Education: false,
+            Media: false,
+        };
+        this.income = 0;
+        this.prosperity = 0;
+        this.cooperativefarm = 0;
+        this.goodsAndServices = {
+            Food: 0,
+            Luxury: 0,
+            Health: 0,
+            Education: 0,
+            Influence: 0,
+        };
+    }
     SetWorkerClass(data: WorkerClass) {
         this.loan = data.loan;
         this.score = data.score;

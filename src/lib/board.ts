@@ -65,7 +65,7 @@ export class Board extends EventEmitter {
         this.mainaction = false;
         this.freeaction = false;
         this.Policy = {
-            Fiscal: 'B',
+            Fiscal: 'C',
             Labor: 'B',
             Taxation: 'A',
             Health: 'B',
@@ -127,20 +127,42 @@ export class Board extends EventEmitter {
         this.setcompany();
     }
     Initialization() {
-        this.Policy.Fiscal = 'C';
-        this.Policy.Labor = 'B';
-        this.Policy.Taxation = 'A';
-        this.Policy.Health = 'B';
-        this.Policy.Education = 'C';
-        this.Policy.Foreign = 'B';
-        this.Policy.Immigration = 'B';
-        this.StateTreasury = 120;
-        this.PublicServices.Education = 5;
-        this.PublicServices.Health = 5;
-        this.PublicServices.Influence = 3;
-        this.setBusinessDeal();
+        this.loan = 0;
+        this.mainaction = false;
+        this.freeaction = false;
+        this.Policy = {
+            Fiscal: 'C',
+            Labor: 'B',
+            Taxation: 'A',
+            Health: 'B',
+            Education: 'C',
+            Foreign: 'B',
+            Immigration: 'B',
+        };
+        this.Export = [{ item: 'Food', amount: 0, price: 0 }],
+            this.Import = [
+                { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
+                { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
+            ]
+        this.StateTreasury = 120,
+            this.PublicServices = {
+                Health: 6,
+                Education: 6,
+                Influence: 4,
+            };
+        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.PolicyVoting = {
+            Fiscal: '',
+            Labor: '',
+            Taxation: '',
+            Health: '',
+            Education: '',
+            Foreign: '',
+            Immigration: '',
+        };
         this.setcompany();
     };
+
     setPolicy(policyType: keyof Policy, policyValue: string): void {
         if (this.Policy.hasOwnProperty(policyType)) {
             this.Policy[policyType] = policyValue;

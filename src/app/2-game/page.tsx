@@ -60,7 +60,7 @@ export default function GameRun() {
     }
   }, [gameState.currentRound, gameState.maxRounds, gameState.phase]);
 
-  // 监听turns，当达到最大turn数时进行处理
+
   useEffect(() => {
     if (gameState.currentTurn > gameState.maxTurns) {
       alert('Game Over');
@@ -90,12 +90,24 @@ export default function GameRun() {
       setActionCompleted(false);
     }
   };
+  function handleInitialization() {
+    Board.getInstance().Initialization();
+    CapitalistClass.getInstance().Initialization();
+    WorkerClass.getInstance().Initialization();
+    gameState.currentTurn = 1;
+    gameState.currentRound = 1;
+    localStorage.setItem('gameState', JSON.stringify(gameState));
+    localStorage.setItem('Board', JSON.stringify(Board.getInstance()));
+    localStorage.setItem('WorkerClass', JSON.stringify(WorkerClass.getInstance()));
+    localStorage.setItem('CapitalistClass', JSON.stringify(CapitalistClass.getInstance()));
+  }
   const [actionCompleted, setActionCompleted] = useState(false);
   return (<>
     <div className="d-flex">
       <p className="p-2 flex-fill">Phase: {gameState.phase}</p>
       <p className="p-2 flex-fill">Turn: {gameState.currentTurn}</p>
       <p className="p-2 flex-fill">Round: {gameState.currentRound}</p>
+      <button onClick={handleInitialization}>initialization</button>
     </div>
     <DataTable />
     <ActionToggle onActionComplete={() => setActionCompleted(true)} />
@@ -391,7 +403,7 @@ function DataTable() {
         </thead>
         <tbody>
           <tr>
-            <td rowSpan="3"><Image src={Board.getInstance().getBoardInfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
+            <td rowSpan={3}><Image src={Board.getInstance().getBoardInfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
             <td>{data.board.getBoardInfo().StateTreasury}</td>
             <td>{data.board.getBoardInfo().PublicServices.Health}</td>
             <td>{data.board.getBoardInfo().PublicServices.Education}</td>
@@ -470,13 +482,6 @@ function DataTable() {
     </>
   );
 }
-
-function initialization() {
-  Board.getInstance().Initialization();
-  //CapitalistClass.getInstance().Initialization();
-  //WorkerClass.().initialization();
-}
-
 
 
 
