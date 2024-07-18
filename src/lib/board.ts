@@ -245,7 +245,7 @@ export class Board extends EventEmitter {
         }
         this.emit('update');
     }
-    
+
     voting(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
             const currentGrade = this.Policy[policy];

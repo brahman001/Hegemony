@@ -35,7 +35,7 @@ interface ActionToggleProps {
 }
 
 export default function GameRun() {
-  const [first,setfirst] = useState(false);
+  const [first, setfirst] = useState(false);
   const [gameState, setGameState] = useState<GameState>(() => {
     if (typeof window !== "undefined") {
       const savedState = localStorage.getItem('gameState');
@@ -48,7 +48,7 @@ export default function GameRun() {
       }
     }
     setfirst(true);
-    return({
+    return ({
       currentTurn: 1,
       currentRound: 1,
       phase: 'Action',
@@ -76,7 +76,7 @@ export default function GameRun() {
         try {
           const workerClass = WorkerClass.getInstance();
           Object.assign(workerClass, JSON.parse(savedWorkerClass));
-          if(workerClass.getworkingclassInfo().population.worker.length<10){
+          if (workerClass.getworkingclassInfo().population.worker.length < 10) {
             setfirst(true);
           }
         } catch (e) {
@@ -146,11 +146,17 @@ export default function GameRun() {
   }
   const handleCloseModal = () => {
     setShowModal(false);
+    setGameState(prevState => ({
+      ...prevState,
+      currentTurn: 1,
+      currentRound: 1,
+      phase: 'Action'
+    }));
   };
 
   const [actionCompleted, setActionCompleted] = useState(false);
   return (<>
-  <>{first&&handleInitialization()}</>
+    <>{first && handleInitialization()}</>
     <div className="d-flex">
       <p className="p-2 flex-fill">Phase: {gameState.phase}</p>
       <p className="p-2 flex-fill">Turn: {gameState.currentTurn}</p>
@@ -170,11 +176,11 @@ export default function GameRun() {
             </div>
             <div className="modal-body">
               <p>The game is ready to play!</p>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Acriculture</button>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Luxury</button>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Heathcare</button>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Education</button>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Media</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Agriculture", null); handleCloseModal(); }}>Agriculture</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Luxury", null); handleCloseModal(); }}>Luxury</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathcare", null); handleCloseModal(); }}>Heathcare</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Education", null); handleCloseModal(); }}>Education</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Media", null); handleCloseModal(); }}>Media</button>
             </div>
             <div className="modal-footer">
             </div>
@@ -200,10 +206,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     setUsingitem(name);
   };
 
-  const setAction = () => {
-    setBasicAction(true);
-    onActionComplete();
-  }
   const actions: Actions = {
     basic: [
       {
@@ -280,7 +282,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       { label: 'Use Healthcare', databstarget: 'Using', onClick: () => openusingModal('Health') },
       { label: 'Use Education', databstarget: 'UsingEducation', onClick: () => openusingModal('Education') },
       { label: 'Use Luxury', databstarget: 'Using', onClick: () => openusingModal('Luxury') },
-      { label: 'pay the loan', databstarget: 'loan' }
+      { label: 'pay the loan', databstarget: 'loan' },
+      { label: '发钱', databstarget: 'loan', onClick: () => WorkerClass.getInstance().addincome(100) },
     ]
   };
   const handleActionClick = (path: number[], action: Action) => {
@@ -335,7 +338,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       votingName,
       option,
       () => {
-        setAction();
+        setBasicAction(true);
+        onActionComplete();
       },
       (error) => {
         alert(error);
@@ -453,31 +457,44 @@ function DataTable() {
   });
 
   useEffect(() => {
-    // 获取各个类的实例
     const workerInstance = WorkerClass.getInstance();
     const capitalistInstance = CapitalistClass.getInstance();
     const boardInstance = Board.getInstance();
 
-    // 更新数据的函数
-    const updateData = () => {
-      setData({
+    const updateWorkerData = () => {
+      console.log('WorkerClass update event triggered');
+      setData(prevData => ({
+        ...prevData,
         workerclass: workerInstance,
-        capitalistclass: capitalistInstance,
-        board: boardInstance,
-      });
+      }));
     };
 
+    const updateCapitalistData = () => {
+      console.log('CapitalistClass update event triggered');
+      setData(prevData => ({
+        ...prevData,
+        capitalistclass: capitalistInstance,
+      }));
+    };
 
-    // 为每个实例添加更新事件监听器
-    workerInstance.on('update', updateData);
-    capitalistInstance.on('update', updateData);
-    boardInstance.on('update', updateData);
+    const updateBoardData = () => {
+      console.log('Board update event triggered');
+      setData(prevData => ({
+        ...prevData,
+        board: boardInstance,
+      }));
+    };
 
-    // 清除事件监听器的函数
+    console.log('Registering event listeners');
+    workerInstance.on('update', updateWorkerData);
+    capitalistInstance.on('update', updateCapitalistData);
+    boardInstance.on('update', updateBoardData);
+
     return () => {
-      workerInstance.off('update', updateData);
-      capitalistInstance.off('update', updateData);
-      boardInstance.off('update', updateData);
+      console.log('Unregistering event listeners');
+      workerInstance.off('update', updateWorkerData);
+      capitalistInstance.off('update', updateCapitalistData);
+      boardInstance.off('update', updateBoardData);
     };
   }, []);
 

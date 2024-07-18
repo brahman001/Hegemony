@@ -54,7 +54,7 @@ export class WorkerClass extends EventEmitter {
                 Acriculture: 0,
                 Luxury: 0,
                 Heathcare: 0,
-                Education:0,
+                Education: 0,
                 Media: 0,
             },
             worker: [],
@@ -78,7 +78,6 @@ export class WorkerClass extends EventEmitter {
             Influence: 0,
         };
     }
-
     public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
             const saveddata = localStorage.getItem('WorkerClass');
@@ -112,15 +111,15 @@ export class WorkerClass extends EventEmitter {
             Education: false,
             Media: false,
         };
-        this.income = 0;
+        this.income = 20;
         this.prosperity = 0;
         this.cooperativefarm = 0;
         this.goodsAndServices = {
             Food: 0,
             Luxury: 0,
-            Health: 0,
+            Health: 6,
             Education: 0,
-            Influence: 0,
+            Influence: 1,
         };
         this.addWorker("unskill", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
         this.addWorker("Acriculture", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
@@ -164,19 +163,19 @@ export class WorkerClass extends EventEmitter {
             if (worker.location) {
                 switch (worker.location.industry) {
                     case 'Agriculture':
-                        this.population.Acriculture++;
+                        this.population.Natureofposition.Acriculture++;
                         break;
                     case 'Luxury':
-                        this.population.Luxury++;
+                        this.population.Natureofposition.Luxury++;
                         break;
                     case 'Healthcare':
-                        this.population.Heathcare++;
+                        this.population.Natureofposition.Heathcare++;
                         break;
                     case 'Education':
-                        this.population.Education++;
+                        this.population.Natureofposition.Education++;
                         break;
                     case 'Media':
-                        this.population.Media++;
+                        this.population.Natureofposition.Media++;
                         break;
                 }
             }
@@ -185,13 +184,14 @@ export class WorkerClass extends EventEmitter {
     addWorker(skill: string, location: Company | null) {
         this.population.worker.push({ skill, location });
         this.calculatePopulationLevel();
-        if (location) {
+        if (location!=null) {
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
         }
+        console.log('test update event');
         this.emit('update');
     }
-    upgrade() {
+    upgrade(worker: Worker) {
         for (let i = 0; i < this.population.worker.length; i++) {
             const worker = this.population.worker[i];
             if (worker.skill === 'unskilled' && worker.location === null) {
@@ -201,7 +201,6 @@ export class WorkerClass extends EventEmitter {
             }
         }
         console.log('No worker was eligible for upgrade.');
-
     }
     using(item: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
         switch (item) {
@@ -213,11 +212,7 @@ export class WorkerClass extends EventEmitter {
                     this.goodsAndServices.Health -= this.population.population_level;
                     this.addWorker('unskill', null);
                 }
-                else {
-                    const errorMessage = `Invalid voting aim or policy already voted: ${item}`;
-                    this.emit('update', errorMessage);
-                    onError(errorMessage);
-                }
+
                 break;
             case 'Health':
                 if (this.goodsAndServices.Health - this.population.population_level >= 0) {
@@ -225,26 +220,23 @@ export class WorkerClass extends EventEmitter {
                     this.addWorker('unskill', null);
                     this.score += 2;
                     this.setProsperity(this.prosperity + 1);
+                    console.log("添加测试")
+                    this.emit('update');
+                    onSuccess();
                 }
-                else {
-                    const errorMessage = `Invalid voting aim or policy already voted: ${item}`;
-                    this.emit('update', errorMessage);
-                    onError(errorMessage);
-                }
-                break;
+                return this.emit('update');
             case "Luxury":
                 if (this.goodsAndServices.Luxury - this.population.population_level >= 0) {
                     this.goodsAndServices.Luxury -= this.population.population_level;
                     this.setProsperity(this.prosperity + 1);
                 }
-                else {
-                    const errorMessage = `Invalid voting aim or policy already voted: ${item}`;
-                    this.emit('update', errorMessage);
-                    onError(errorMessage);
-                }
                 break;
         }
+        const errorMessage = `没有足够: ${item}`;
+        this.emit('update', errorMessage);
+        onError(errorMessage);
     }
+
     payoffloan() {
         this.income -= 50;
         this.loan--;
@@ -253,10 +245,12 @@ export class WorkerClass extends EventEmitter {
         this.score += newScore;
         this.emit('update');
     }
+
     addincome(number: number) {
         this.income += number;
         this.emit('update');
     }
+
     getworkingclassInfo() {
         return {
             population: this.population,
