@@ -7,6 +7,7 @@ import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
 import { Company } from '@/lib/company';
+import { table } from 'console';
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -111,7 +112,42 @@ export default function GameRun() {
     localStorage.setItem('WorkerClass', JSON.stringify(WorkerClass.getInstance()));
     localStorage.setItem('CapitalistClass', JSON.stringify(CapitalistClass.getInstance()));
   }, [gameState]);
+  const [data, setData] = useState({
+    workerclass: WorkerClass.getInstance(),
+    capitalistclass: CapitalistClass.getInstance(),
+    board: Board.getInstance(),
+  });
 
+  useEffect(() => {
+    const workerInstance = WorkerClass.getInstance();
+    const capitalistInstance = CapitalistClass.getInstance();
+    const boardInstance = Board.getInstance();
+
+    const updateData = () => {
+      console.log('Updating data', {
+        workerclass: workerInstance,
+        capitalistclass: capitalistInstance,
+        board: boardInstance,
+      });
+      setData({
+        workerclass: workerInstance,
+        capitalistclass: capitalistInstance,
+        board: boardInstance,
+      });
+    };
+
+    console.log('Registering event listeners');
+    workerInstance.on('update', updateData);
+    capitalistInstance.on('update', updateData);
+    boardInstance.on('update', updateData);
+
+    return () => {
+      console.log('Unregistering event listeners');
+      workerInstance.off('update', updateData);
+      capitalistInstance.off('update', updateData);
+      boardInstance.off('update', updateData);
+    };
+  }, []);
   const handleNextRound = () => {
     if (gameState.phase === 'Production') {
       if (gameState.currentTurn <= gameState.maxTurns) {
@@ -163,7 +199,7 @@ export default function GameRun() {
       <p className="p-2 flex-fill">Round: {gameState.currentRound}</p>
       <button onClick={handleInitialization}>initialization</button>
     </div>
-    <DataTable />
+    {DataTable(data)}
     <ActionToggle onActionComplete={() => setActionCompleted(true)} />
     {actionCompleted && <button onClick={handleNextRound}>Next Round</button>}
     {showModal && (
@@ -358,8 +394,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     );
   };
   const handleloan = () => {
-    WorkerClass.getInstance().using(
-      Usingitem,
+    WorkerClass.getInstance().payoffloan(
       () => {
         setfreeAction(true);
       },
@@ -449,55 +484,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   );
 };
 
-function DataTable() {
-  const [data, setData] = useState({
-    workerclass: WorkerClass.getInstance(),
-    capitalistclass: CapitalistClass.getInstance(),
-    board: Board.getInstance(),
-  });
-
-  useEffect(() => {
-    const workerInstance = WorkerClass.getInstance();
-    const capitalistInstance = CapitalistClass.getInstance();
-    const boardInstance = Board.getInstance();
-
-    const updateWorkerData = () => {
-      console.log('WorkerClass update event triggered');
-      setData(prevData => ({
-        ...prevData,
-        workerclass: workerInstance,
-      }));
-    };
-
-    const updateCapitalistData = () => {
-      console.log('CapitalistClass update event triggered');
-      setData(prevData => ({
-        ...prevData,
-        capitalistclass: capitalistInstance,
-      }));
-    };
-
-    const updateBoardData = () => {
-      console.log('Board update event triggered');
-      setData(prevData => ({
-        ...prevData,
-        board: boardInstance,
-      }));
-    };
-
-    console.log('Registering event listeners');
-    workerInstance.on('update', updateWorkerData);
-    capitalistInstance.on('update', updateCapitalistData);
-    boardInstance.on('update', updateBoardData);
-
-    return () => {
-      console.log('Unregistering event listeners');
-      workerInstance.off('update', updateWorkerData);
-      capitalistInstance.off('update', updateCapitalistData);
-      boardInstance.off('update', updateBoardData);
-    };
-  }, []);
-
+function DataTable(data: { workerclass: WorkerClass; capitalistclass: CapitalistClass; board: Board; }) {
   return (
     <><h3 className="container text-center">workercalss</h3>
       <table className="table table-striped table-bordered">
@@ -626,7 +613,7 @@ function DataTable() {
         <div className="p-2 flex-fill">
           <h3 className="container text-center">State Companies</h3>
           <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
-            {data.board.getBoardInfo().companys.map((company, index) => (
+            {data.board.getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
               <div key={index} style={{ margin: '50px' }}>
                 <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
                 <div>
@@ -640,7 +627,7 @@ function DataTable() {
         <div className="p-2 flex-fill">
           <h3 className="container text-center">capitalistclass Companies</h3>
           <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
-            {data.capitalistclass.getCapitalistInfo().Company.map((company, index) => (
+            {data.capitalistclass.getCapitalistInfo().Company.map((company: Company, index: React.Key | null | undefined) => (
               <div key={index} style={{ margin: '50px' }}>
                 <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
                 <div>

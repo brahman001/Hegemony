@@ -237,15 +237,16 @@ export class WorkerClass extends EventEmitter {
         onError(errorMessage);
     }
 
-    payoffloan() {
+    payoffloan(onSuccess: () => void, onError: (message: string) => void) {
         this.income -= 50;
         this.loan--;
+        onSuccess();
+        this.emit("update")
     }
     setScore(newScore: number): void {
         this.score += newScore;
         this.emit('update');
     }
-
     addincome(number: number) {
         this.income += number;
         this.emit('update');
