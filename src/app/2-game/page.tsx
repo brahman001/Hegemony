@@ -6,7 +6,7 @@ import { WorkerClass, GoodsAndServices } from '../../lib/worker class';
 import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
-import { workerData } from 'worker_threads';
+import { Company } from '@/lib/company';
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -35,8 +35,8 @@ interface ActionToggleProps {
 }
 
 export default function GameRun() {
+  const [first,setfirst] = useState(false);
   const [gameState, setGameState] = useState<GameState>(() => {
-    // 从 Local Storage 加载初始状态
     if (typeof window !== "undefined") {
       const savedState = localStorage.getItem('gameState');
       if (savedState) {
@@ -47,21 +47,57 @@ export default function GameRun() {
         }
       }
     }
-    return {
+    setfirst(true);
+    return({
       currentTurn: 1,
       currentRound: 1,
       phase: 'Action',
       maxRounds: 5,
       maxTurns: 5
-    };
+    });
   })
+  const [showModal, setShowModal] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedBoard = localStorage.getItem('Board');
+      const savedWorkerClass = localStorage.getItem('WorkerClass');
+      const savedCapitalistClass = localStorage.getItem('CapitalistClass');
 
+      if (savedBoard) {
+        try {
+          const board = Board.getInstance();
+          Object.assign(board, JSON.parse(savedBoard));
+        } catch (e) {
+          console.error('Error parsing board state from localStorage', e);
+        }
+      }
+
+      if (savedWorkerClass) {
+        try {
+          const workerClass = WorkerClass.getInstance();
+          Object.assign(workerClass, JSON.parse(savedWorkerClass));
+          if(workerClass.getworkingclassInfo().population.worker.length<10){
+            setfirst(true);
+          }
+        } catch (e) {
+          console.error('Error parsing worker class state from localStorage', e);
+        }
+      }
+      if (savedCapitalistClass) {
+        try {
+          const capitalistClass = CapitalistClass.getInstance();
+          Object.assign(capitalistClass, JSON.parse(savedCapitalistClass));
+        } catch (e) {
+          console.error('Error parsing capitalist class state from localStorage', e);
+        }
+      }
+    }
+  }, []);
   useEffect(() => {
     if (gameState.currentRound > gameState.maxRounds && gameState.phase === 'Action') {
       setGameState(prev => ({ ...prev, phase: 'Production' }));
     }
   }, [gameState.currentRound, gameState.maxRounds, gameState.phase]);
-
 
   useEffect(() => {
     if (gameState.currentTurn > gameState.maxTurns) {
@@ -93,28 +129,28 @@ export default function GameRun() {
     }
   };
   function handleInitialization() {
+    const board = Board.getInstance();
+    board.Initialization2p();
+    const workerClass = WorkerClass.getInstance();
+    workerClass.Initialization2P();
+    const capitalistClass = CapitalistClass.getInstance();
+    capitalistClass.Initialization();
     setGameState(prevState => ({
       ...prevState,
       currentTurn: 1,
       currentRound: 1,
-      phase: 'Action' 
+      phase: 'Action'
     }));
-  
-
-    const board = Board.getInstance();
-    board.Initialization();
-    const workerClass = WorkerClass.getInstance();
-    workerClass.Initialization();
-    const capitalistClass = CapitalistClass.getInstance();
-    capitalistClass.Initialization();
-  
-    localStorage.setItem('gameState', JSON.stringify(gameState));
-    localStorage.setItem('Board', JSON.stringify(board));
-    localStorage.setItem('WorkerClass', JSON.stringify(workerClass));
-    localStorage.setItem('CapitalistClass', JSON.stringify(capitalistClass));
+    setfirst(false);
+    setShowModal(true);
   }
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
   const [actionCompleted, setActionCompleted] = useState(false);
   return (<>
+  <>{first&&handleInitialization()}</>
     <div className="d-flex">
       <p className="p-2 flex-fill">Phase: {gameState.phase}</p>
       <p className="p-2 flex-fill">Turn: {gameState.currentTurn}</p>
@@ -124,8 +160,28 @@ export default function GameRun() {
     <DataTable />
     <ActionToggle onActionComplete={() => setActionCompleted(true)} />
     {actionCompleted && <button onClick={handleNextRound}>Next Round</button>}
-  </>
-  );
+    {showModal && (
+      <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Game Initialized</h5>
+              <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+            </div>
+            <div className="modal-body">
+              <p>The game is ready to play!</p>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Acriculture</button>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Luxury</button>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Heathcare</button>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Education</button>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Media</button>
+            </div>
+            <div className="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div>)}
+  </>);
 }
 
 
@@ -556,7 +612,11 @@ function DataTable() {
             {data.board.getBoardInfo().companys.map((company, index) => (
               <div key={index} style={{ margin: '50px' }}>
                 <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
-                working
+                <div>
+                  {working(company) ?
+                    <div>working</div> :
+                    <div>noworking</div>}
+                </div>
               </div>
             ))}</div>
         </div>
@@ -566,14 +626,32 @@ function DataTable() {
             {data.capitalistclass.getCapitalistInfo().Company.map((company, index) => (
               <div key={index} style={{ margin: '50px' }}>
                 <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
-                working
+                <div>
+                  {working(company) ?
+                    <div>working</div> :
+                    <div>noworking</div>}
+                </div>
               </div>
             ))}</div></div>
       </div></>
   );
 }
 
+function working(company: Company): boolean {
+  const workers = WorkerClass.getInstance().getworkingclassInfo().population.worker;
+  let Workers = 0, skilledWorker = 0;
 
+  for (let i = 0; i < workers.length; i++) {
+    const workerLocation = workers[i].location;
+    if (workerLocation && workerLocation.name === company.name) {
+      Workers++;
+      if (workers[i].skill !== 'unskill') {
+        skilledWorker++;
+      }
+    }
+  }
+  return Workers === company.requiredWorkers && skilledWorker >= company.skilledworker;
+}
 
 
 

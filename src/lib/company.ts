@@ -26,7 +26,7 @@ export class Company {
   wages: Wages;
   imageUrl: string;
 
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>) {
+  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>,imageUrl:string) {
     this.name = name;
     this.cost = cost;
     this.industry = industry;
@@ -39,7 +39,7 @@ export class Company {
       L2: wages.L2 || 0,
       L3: wages.L3 || 0,
     };
-    this.imageUrl = '';
+    this.imageUrl = imageUrl;
   }
 
   // public working(): boolean {
@@ -61,8 +61,8 @@ export class Company {
 export class CapitalistCompany extends Company {
 
   machineryBonus: MachineryBonus;
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>) {
-    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages,);
+  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>,imageUrl:string) {
+    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages,imageUrl);
     this.machineryBonus = {
       function: machineryBonus.function || false,
       Bonus: machineryBonus.Bonus || 0,

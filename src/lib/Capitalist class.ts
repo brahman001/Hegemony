@@ -106,7 +106,7 @@ export class CapitalistClass extends EventEmitter {
         this.loan = 0;
     }
 }
-const CapitalistCompanys: CapitalistCompany[] = [
+export const CapitalistCompanys: CapitalistCompany[] = [
     {
         name: "TV_STATION_8",
         cost: 8,

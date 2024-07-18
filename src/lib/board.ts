@@ -45,6 +45,7 @@ interface VotingRules {
     [key: string]: string[];
 }
 export class Board extends EventEmitter {
+    private player:number;
     private mainaction: Boolean;
     private freeaction: Boolean;
     private static instance: Board;
@@ -61,6 +62,7 @@ export class Board extends EventEmitter {
     private loan: number;
     constructor() {
         super();
+        this.player=2;
         this.loan = 0;
         this.mainaction = false;
         this.freeaction = false;
@@ -99,7 +101,8 @@ export class Board extends EventEmitter {
             B: ['A', 'C'],
             C: ['B'],
         };
-        this.setcompany();
+        this.Initialization2p();
+        this.setcompany2p();
     }
 
     static getInstance() {
@@ -124,9 +127,9 @@ export class Board extends EventEmitter {
         this.PublicServices = data.PublicServices;
         this.BusinessDeal = data.BusinessDeal;
         this.PolicyVoting = data.PolicyVoting;
-        this.setcompany();
+        this.setcompany2p();
     }
-    Initialization() {
+    Initialization2p() {
         this.loan = 0;
         this.mainaction = false;
         this.freeaction = false;
@@ -160,7 +163,7 @@ export class Board extends EventEmitter {
             Foreign: '',
             Immigration: '',
         };
-        this.setcompany();
+        this.setcompany2p();
     };
 
     setPolicy(policyType: keyof Policy, policyValue: string): void {
@@ -220,18 +223,29 @@ export class Board extends EventEmitter {
         this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
         this.emit('update');
     }
-    setcompany() {
-        if (this.Policy.Fiscal === 'C') {
-            this.StateCompany = [StateCompanys[0], StateCompanys[3], StateCompanys[6]];
-        }
-        else if (this.Policy.Fiscal === 'B') {
-            this.StateCompany = [StateCompanys[0], StateCompanys[1], StateCompanys[3], StateCompanys[4], StateCompanys[6], StateCompanys[7]];
-        }
-        else {
-            this.StateCompany = StateCompanys;
+    setcompany2p() {
+        switch (this.Policy.Fiscal) {
+            case 'A':
+                this.StateCompany = [StateCompanies[3], StateCompanies[7], StateCompanies[11]];
+            case 'B':
+                this.StateCompany = [ StateCompanies[2],  StateCompanies[6], StateCompanies[10]];
+            default:
+                this.StateCompany = [StateCompanies[1], StateCompanies[5], StateCompanies[9]];
         }
         this.emit('update');
     }
+    setcompany4p() {
+        switch (this.Policy.Fiscal) {
+            case 'A':
+                this.StateCompany = [StateCompanies[3], StateCompanies[7], StateCompanies[11]];
+            case 'B':
+                this.StateCompany = [ StateCompanies[2],  StateCompanies[6], StateCompanies[10]];
+            default:
+                this.StateCompany = [StateCompanies[0], StateCompanies[4], StateCompanies[8]];
+        }
+        this.emit('update');
+    }
+    
     voting(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
             const currentGrade = this.Policy[policy];
@@ -250,8 +264,6 @@ export class Board extends EventEmitter {
             onError(errorMessage);
         }
     }
-
-
 }
 const BusinessDealcards: BusinessDeal[] = [
     { item: "Food", amount: 6, price: 40, tax: { "A": 12, "B": 6, "C": 0 }, imageUrl: "/6food.jpg" },
@@ -261,14 +273,17 @@ const BusinessDealcards: BusinessDeal[] = [
     { item: "Luxury", amount: 10, price: 40, tax: { "A": 20, "B": 10, "C": 0 }, imageUrl: "/10Luxury.jpg" },
     { item: "Luxury", amount: 12, price: 50, tax: { "A": 24, "B": 12, "C": 0 }, imageUrl: "/12Luxury.jpg" },
 ];
-const StateCompanies: StateCompany[] = [
-    { name: "UNIVERSITY_3", cost: 30, industry: 'Education', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/University_3.jpg" },
+export const StateCompanies: StateCompany[] = [
+    { name: "UNIVERSITY_3-4p", cost: 30, industry: 'Education', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/University_3-4p.jpg" },
+    { name: "UNIVERSITY_3-2p", cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_3-2p.jpg" },
     { name: "UNIVERSITY_2", cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_2.jpg" },
     { name: "UNIVERSITY_1", cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_1.jpg" },
-    { name: "HOSPITAL_3", cost: 30, industry: 'Healthcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/Hospital_3.jpg" },
+    { name: "HOSPITAL_3-4p", cost: 30, industry: 'Healthcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/Hospital_3-4p.jpg" },
+    { name: "HOSPITAL_3-2p", cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_3-2p.jpg" },
     { name: "HOSPITAL_2", cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_2.jpg" },
     { name: "HOSPITAL_1", cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_1.jpg" },
-    { name: "TV STATION_3", cost: 30, industry: 'Media', requiredWorkers: 4, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/TVStation_3.jpg" },
+    { name: "TV STATION_3-4p", cost: 30, industry: 'Media', requiredWorkers: 3, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/TVStation_3-2p.jpg" },
+    { name: "TV STATION_3-2p",  cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_3-2p.jpg" },
     { name: "TV STATION_2", cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_2.jpg" },
     { name: "TV STATION_1", cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_1.jpg" },
   ];

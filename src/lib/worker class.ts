@@ -1,20 +1,23 @@
 import { EventEmitter } from 'events';
-import { Company } from '@/lib/company'
-interface Population {
-    Acriculture: number;
-    Luxury: number;
-    Heathcare: number;
-    Education: number;
-    Media: number;
-    worker: Worker[];
-    population_level: number;
-}
-
+import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
+import { CapitalistCompanys } from "@/lib/Capitalist class"
+import { StateCompanies } from './board';
 interface Worker {
     skill: string;
     location: Company | null;
 }
 
+interface Population {
+    Natureofposition: {
+        Acriculture: number;
+        Luxury: number;
+        Heathcare: number;
+        Education: number;
+        Media: number;
+    };
+    worker: Worker[];
+    population_level: number;
+}
 interface TradeUnions {
     Acriculture: boolean;
     Luxury: boolean;
@@ -47,11 +50,13 @@ export class WorkerClass extends EventEmitter {
         this.loan = 0;
         this.score = 0;
         this.population = {
-            Acriculture: 0,
-            Luxury: 0,
-            Heathcare: 0,
-            Education: 0,
-            Media: 0,
+            Natureofposition: {
+                Acriculture: 0,
+                Luxury: 0,
+                Heathcare: 0,
+                Education:0,
+                Media: 0,
+            },
             worker: [],
             population_level: 3,
         };
@@ -86,15 +91,17 @@ export class WorkerClass extends EventEmitter {
         }
         return WorkerClass.instance;
     }
-    Initialization() {
+    Initialization2P() {
         this.loan = 0;
         this.score = 0;
         this.population = {
-            Acriculture: 0,
-            Luxury: 0,
-            Heathcare: 0,
-            Education: 0,
-            Media: 0,
+            Natureofposition: {
+                Acriculture: 0,
+                Luxury: 0,
+                Heathcare: 0,
+                Education: 0,
+                Media: 0,
+            },
             worker: [],
             population_level: 3,
         };
@@ -115,6 +122,15 @@ export class WorkerClass extends EventEmitter {
             Education: 0,
             Influence: 0,
         };
+        this.addWorker("unskill", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
+        this.addWorker("Acriculture", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
+        this.addWorker("unskill", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
+        this.addWorker("Luxury", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
+        this.addWorker("unskill", StateCompanies.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
+        this.addWorker("Education", StateCompanies.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
+        this.addWorker("unskill", StateCompanies.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
+        this.addWorker("Heathcare", StateCompanies.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
+        this.addWorker("unskill", null);
         this.emit('update');
     }
     SetWorkerClass(data: WorkerClass) {
@@ -169,6 +185,10 @@ export class WorkerClass extends EventEmitter {
     addWorker(skill: string, location: Company | null) {
         this.population.worker.push({ skill, location });
         this.calculatePopulationLevel();
+        if (location) {
+            const industry = location.industry as keyof Population["Natureofposition"];
+            this.population.Natureofposition[industry] += 1;
+        }
         this.emit('update');
     }
     upgrade() {
@@ -247,6 +267,5 @@ export class WorkerClass extends EventEmitter {
             loan: this.loan,
         };
     }
-
 }
 
