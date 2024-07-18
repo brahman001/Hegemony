@@ -1,7 +1,7 @@
 import { WorkerClass } from "./worker class";
 import { EventEmitter } from 'events';
 import { StateCompany } from './company'
-interface Policy {
+export interface Policy {
     Fiscal: string;
     Labor: string;
     Taxation: string;
@@ -11,7 +11,7 @@ interface Policy {
     Immigration: string;
 }
 
-interface PublicServices {
+export interface PublicServices {
     Health: number;
     Education: number;
     Influence: number;
@@ -261,15 +261,15 @@ const BusinessDealcards: BusinessDeal[] = [
     { item: "Luxury", amount: 10, price: 40, tax: { "A": 20, "B": 10, "C": 0 }, imageUrl: "/10Luxury.jpg" },
     { item: "Luxury", amount: 12, price: 50, tax: { "A": 24, "B": 12, "C": 0 }, imageUrl: "/12Luxury.jpg" },
 ];
-const StateCompanys: StateCompany[] = [
-    { name: "UNIVERSITY_3", cost: 30, industry: 'Education', requiredWorkers: 3, goodsProduced: 6, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/University_3.jpg" },
-    { name: "UNIVERSITY_2", cost: 20, industry: 'Education', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/University_2.jpg" },
-    { name: "UNIVERSITY_1", cost: 20, industry: 'Education', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/University_1.jpg" },
-    { name: "HOSPITAL_3", cost: 30, industry: 'Healthcare', requiredWorkers: 3, goodsProduced: 6, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/Hospital_3.jpg" },
-    { name: "HOSPITAL_2", cost: 20, industry: 'Healthcare', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/Hospital_2.jpg" },
-    { name: "HOSPITAL_1", cost: 20, industry: 'Healthcare', requiredWorkers: 2, goodsProduced: 4, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/Hospital_1.jpg" },
-    { name: "TV STATION_3", cost: 30, industry: 'Media', requiredWorkers: 4, goodsProduced: 4, wages: { level: "L2", "L1": 35, "L2": 30, "L3": 25 }, imageUrl: "/TVStation_3.jpg" },
-    { name: "TV STATION_2", cost: 20, industry: 'Media', requiredWorkers: 2, goodsProduced: 3, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/TVStation_2.jpg" },
-    { name: "TV STATION_1", cost: 20, industry: 'Media', requiredWorkers: 2, goodsProduced: 3, wages: { level: "L2", "L1": 25, "L2": 20, "L3": 15 }, imageUrl: "/TVStation_1.jpg" },
-]
-
+const StateCompanies: StateCompany[] = [
+    { name: "UNIVERSITY_3", cost: 30, industry: 'Education', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/University_3.jpg" },
+    { name: "UNIVERSITY_2", cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_2.jpg" },
+    { name: "UNIVERSITY_1", cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_1.jpg" },
+    { name: "HOSPITAL_3", cost: 30, industry: 'Healthcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/Hospital_3.jpg" },
+    { name: "HOSPITAL_2", cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_2.jpg" },
+    { name: "HOSPITAL_1", cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_1.jpg" },
+    { name: "TV STATION_3", cost: 30, industry: 'Media', requiredWorkers: 4, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/TVStation_3.jpg" },
+    { name: "TV STATION_2", cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_2.jpg" },
+    { name: "TV STATION_1", cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_1.jpg" },
+  ];
+  

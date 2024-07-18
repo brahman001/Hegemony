@@ -16,20 +16,22 @@ interface MachineryBonus {
   Bonus: number;
 }
 
-class Company {
+export class Company {
   name: string;
   cost: number;
   industry: String;
+  skilledworker: number
   requiredWorkers: number;
   goodsProduced: number;
   wages: Wages;
-  imageUrl:string;
+  imageUrl: string;
 
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
+  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>) {
     this.name = name;
     this.cost = cost;
     this.industry = industry;
     this.requiredWorkers = requiredWorkers;
+    this.skilledworker = skilledworker;
     this.goodsProduced = goodsProduced;
     this.wages = {
       level: wages.level || 'L2',
@@ -39,33 +41,47 @@ class Company {
     };
     this.imageUrl = '';
   }
+
+  // public working(): boolean {
+  //   const worker = WorkerClass.getInstance().getworkingclassInfo().population.worker;
+  //   let Workers = 0, skilledWorker = 0;
+  
+  //   for (let i = 0; i < worker.length; i++) {
+  //     if (worker[i].location === this) {
+  //       Workers++; // 移动计数器到内部条件
+  //       if (worker[i].skill !== 'unskill') {
+  //         skilledWorker++;
+  //       }
+  //     }
+  //   }
+  
+  //   return Workers === this.requiredWorkers && skilledWorker >= this.skilledworker;
+  // }
 }
 export class CapitalistCompany extends Company {
 
   machineryBonus: MachineryBonus;
-
-
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>) {
-    super(name, cost, industry, requiredWorkers, goodsProduced, wages);
+  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>) {
+    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages,);
     this.machineryBonus = {
-      function: machineryBonus.function !== undefined ? machineryBonus.function : true,
+      function: machineryBonus.function || false,
       Bonus: machineryBonus.Bonus || 0,
     };
-  }
-  production(industry: string) {
-    if (this.machineryBonus.function) {
-      CapitalistClass.getInstance().addgoodsAndServices(industry, this.machineryBonus.Bonus + this.goodsProduced);
-    }
-    else {
-      CapitalistClass.getInstance().addgoodsAndServices(industry, this.goodsProduced);
-    }
-    WorkerClass.getInstance().addincome(this.wages[this.wages.level]);
   }
 }
 
 export class StateCompany extends Company {
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, goodsProduced: number, wages: Partial<Wages>) {
-    super(name, cost, industry, requiredWorkers, goodsProduced, wages);
+  constructor(
+    name: string,
+    cost: number,
+    industry: string,
+    requiredWorkers: number,
+    skilledworker: number,
+    goodsProduced: number,
+    wages: Wages,
+    imageUrl: string
+  ) {
+    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages, imageUrl);
   }
-  
+
 }

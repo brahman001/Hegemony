@@ -2,9 +2,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import React, { useState, useEffect, ReactElement } from 'react';
-import { WorkerClass } from '../../lib/worker class';
+import { WorkerClass, GoodsAndServices } from '../../lib/worker class';
 import { CapitalistClass } from '@/lib/Capitalist class';
-import { Board } from '@/lib/board';
+import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
 import { workerData } from 'worker_threads';
 interface GameState {
@@ -18,6 +18,8 @@ interface Action {
   label: string;
   onClick?: () => void;
   subActions?: Action[];
+  databstarget?: String;
+
 }
 interface Actions {
   basic: Action[];
@@ -91,15 +93,25 @@ export default function GameRun() {
     }
   };
   function handleInitialization() {
-    Board.getInstance().Initialization();
-    CapitalistClass.getInstance().Initialization();
-    WorkerClass.getInstance().Initialization();
-    gameState.currentTurn = 1;
-    gameState.currentRound = 1;
+    setGameState(prevState => ({
+      ...prevState,
+      currentTurn: 1,
+      currentRound: 1,
+      phase: 'Action' 
+    }));
+  
+
+    const board = Board.getInstance();
+    board.Initialization();
+    const workerClass = WorkerClass.getInstance();
+    workerClass.Initialization();
+    const capitalistClass = CapitalistClass.getInstance();
+    capitalistClass.Initialization();
+  
     localStorage.setItem('gameState', JSON.stringify(gameState));
-    localStorage.setItem('Board', JSON.stringify(Board.getInstance()));
-    localStorage.setItem('WorkerClass', JSON.stringify(WorkerClass.getInstance()));
-    localStorage.setItem('CapitalistClass', JSON.stringify(CapitalistClass.getInstance()));
+    localStorage.setItem('Board', JSON.stringify(board));
+    localStorage.setItem('WorkerClass', JSON.stringify(workerClass));
+    localStorage.setItem('CapitalistClass', JSON.stringify(capitalistClass));
   }
   const [actionCompleted, setActionCompleted] = useState(false);
   return (<>
@@ -120,16 +132,20 @@ export default function GameRun() {
 
 const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   const [activePath, setActivePath] = useState<number[]>([]);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [votingName, setVotingName] = useState('');
-  const [usedBasicActions, setBasicActionCompleted] = useState(false);
-  const [usedfreeActions, setfreeActionCompleted] = useState(false);
-  const openModalWithVoting = (name: string) => {
-    setModalOpen(true);
+  const [isVotingModalOpen, setVotingModalOpen] = useState(false);
+  const [votingName, setVotingName] = useState<keyof Policy>('Fiscal');
+  const [usedBasicActions, setBasicAction] = useState(false);
+  const [usedfreeActions, setfreeAction] = useState(false);
+  const [Usingitem, setUsingitem] = useState<keyof GoodsAndServices>('Health');
+  const openModalWithVoting = (name: keyof Policy) => {
     setVotingName(name);
   };
+  const openusingModal = (name: keyof GoodsAndServices) => {
+    setUsingitem(name);
+  };
+
   const setAction = () => {
-    setBasicActionCompleted(true);
+    setBasicAction(true);
     onActionComplete();
   }
   const actions: Actions = {
@@ -139,18 +155,22 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
         subActions: [
           {
             label: 'Fiscal',
+            databstarget: 'Voting',
             onClick: () => openModalWithVoting('Fiscal'),
           },
           {
             label: 'Labor',
+            databstarget: 'Voting',
             onClick: () => openModalWithVoting('Labor')
           },
           {
             label: 'Taxation',
+            databstarget: 'Voting',
             onClick: () => openModalWithVoting('Taxation')
           },
           {
             label: 'Health',
+            databstarget: 'Voting',
             onClick: () => openModalWithVoting('Health')
           },
           {
@@ -201,8 +221,10 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       }
     ],
     free: [
-      { label: 'Use heath' },
-      { label: 'Free Action 2' }
+      { label: 'Use Healthcare', databstarget: 'Using', onClick: () => openusingModal('Health') },
+      { label: 'Use Education', databstarget: 'UsingEducation', onClick: () => openusingModal('Education') },
+      { label: 'Use Luxury', databstarget: 'Using', onClick: () => openusingModal('Luxury') },
+      { label: 'pay the loan', databstarget: 'loan' }
     ]
   };
   const handleActionClick = (path: number[], action: Action) => {
@@ -223,26 +245,69 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     if (keyPrefix === 'basic' && usedBasicActions) {
       return <div key="completed">已完成</div>;
     }
-    if (keyPrefix === 'basic' && usedBasicActions) {
+    if (keyPrefix === 'free' && usedfreeActions) {
       return <div key="completed">已完成</div>;
     }
 
     return actionList.map((action, index) => {
       const currentPath = [...path, index];
       const isActive = activePath.length >= currentPath.length && activePath.slice(0, currentPath.length).join(',') === currentPath.join(',');
-      return (
-        <div key={index} >
-          <button onClick={() => handleActionClick(currentPath, action)}>{action.label}</button>
-          {isActive && action.subActions && (
-            <div style={{ marginLeft: '20px' }}>
-              {renderActions(action.subActions, currentPath, keyPrefix)}
-            </div>
-          )}
-        </div>
-      );
+
+      if (action.subActions && action.subActions.length > 0) {
+        // Render button with subActions
+        return (
+          <div key={index} style={{ padding: '10px' }}>
+            <button onClick={() => handleActionClick(currentPath, action)} className="btn btn-primary">{action.label}</button>
+            {isActive && (
+              <div>
+                {renderActions(action.subActions, currentPath, keyPrefix)}
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        return (
+          <div key={index} style={{ padding: '10px' }}>
+            <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target={"#" + action.databstarget} onClick={() => handleActionClick(currentPath, action)}>{action.label}</button>
+          </div>
+        );
+      }
     });
   };
-
+  const handleVote = (option: string) => {
+    Board.getInstance().voting(
+      votingName,
+      option,
+      () => {
+        setAction();
+      },
+      (error) => {
+        alert(error);
+      }
+    );
+  };
+  const handleUsing = () => {
+    WorkerClass.getInstance().using(
+      Usingitem,
+      () => {
+        setfreeAction(true);
+      },
+      (error) => {
+        alert(error);
+      }
+    );
+  };
+  const handleloan = () => {
+    WorkerClass.getInstance().using(
+      Usingitem,
+      () => {
+        setfreeAction(true);
+      },
+      (error) => {
+        alert(error);
+      }
+    );
+  };
 
   return (
     <div className="container">
@@ -254,63 +319,76 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
               {renderActions(actionList, [], key)}
             </div></div>
         ))}</div>
-      <VotingModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={setAction}
-        name={votingName}
-      />
+      <div className="modal fade" id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">{votingName}</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>{votingName}'s 当前政策{Board.getInstance().getBoardInfo().Policy[votingName]}</div>
+            <div className="modal-body">
+              <button onClick={() => handleVote('A')}>A</button>
+              <button onClick={() => handleVote('B')}>B</button>
+              <button onClick={() => handleVote('C')}>C</button>
+            </div>
+            {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="modal fade" id="Using" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>{Usingitem}有{WorkerClass.getInstance().getworkingclassInfo().goodsAndServices[Usingitem]}</div>
+            <div className="modal-body">
+              <button onClick={() => handleUsing()}>using</button>
+            </div>
+            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="modal fade" id="loan" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>s 当前{WorkerClass.getInstance().getworkingclassInfo().loan}</div>
+            <div className="modal-body">
+              {
+                WorkerClass.getInstance().getworkingclassInfo().loan !== 0 ?
+                  WorkerClass.getInstance().getworkingclassInfo().income >= 50 ?
+                    <button onClick={() => handleloan()}>A</button> :
+                    <div>no money</div>
+                  :
+                  <div>no loan</div>
+              }
+              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-// function MultiplayerGameActions() {
-//   const [playerStatus, setPlayerStatus] = useState({
-//       player1: { hasPerformedBasic: false, hasPerformedFree: false },
-//       player2: { hasPerformedBasic: false, hasPerformedFree: false }
-//   });
-
-//   const handleBasicAction = (player) => {
-//       alert(`${player} executing Basic Action`);
-//       setPlayerStatus(prev => ({
-//           ...prev,
-//           [player]: { ...prev[player], hasPerformedBasic: true }
-//       }));
-//   };
-
-//   const handleFreeAction = (player) => {
-//       alert(`${player} executing Free Action`);
-//       setPlayerStatus(prev => ({
-//           ...prev,
-//           [player]: { ...prev[player], hasPerformedFree: true }
-//       }));
-//   };
-
-//   const resetActions = (player) => {
-//       // Optionally reset actions at the end of the turn
-//       setPlayerStatus(prev => ({
-//           ...prev,
-//           [player]: { hasPerformedBasic: false, hasPerformedFree: false }
-//       }));
-//   };
-
-//   return (
-//       <div>
-//           {Object.entries(playerStatus).map(([player, { hasPerformedBasic, hasPerformedFree }]) => (
-//               <div key={player}>
-//                   <h3>{player.toUpperCase()}'s Turn</h3>
-//                   {!hasPerformedBasic && (
-//                       <button onClick={() => handleBasicAction(player)}>Perform Basic Action</button>
-//                   )}
-//                   {!hasPerformedFree && (
-//                       <button onClick={() => handleFreeAction(player)}>Perform Free Action (Optional)</button>
-//                   )}
-//                   <button onClick={() => resetActions(player)}>End Turn & Reset Actions</button>
-//               </div>
-//           ))}
-//       </div>
-//   );
-// }
 function DataTable() {
   const [data, setData] = useState({
     workerclass: WorkerClass.getInstance(),
@@ -345,7 +423,7 @@ function DataTable() {
       capitalistInstance.off('update', updateData);
       boardInstance.off('update', updateData);
     };
-  }, []); // 空依赖数组意味着这个 effect 只在组件挂载时运行一次
+  }, []);
 
   return (
     <><h3 className="container text-center">workercalss</h3>
@@ -414,6 +492,7 @@ function DataTable() {
             <th scope="col">Fiscal</th>
             <th scope="col">Labor</th>
             <th scope="col">Taxation</th>
+            <th scope="col">Health</th>
             <th scope="col">Education</th>
             <th scope="col">Foreign</th>
             <th scope="col">Immigration</th>
@@ -422,6 +501,7 @@ function DataTable() {
             <td>{data.board.getBoardInfo().Policy.Fiscal}</td>
             <td>{data.board.getBoardInfo().Policy.Labor}</td>
             <td>{data.board.getBoardInfo().Policy.Taxation}</td>
+            <td>{data.board.getBoardInfo().Policy.Health}</td>
             <td>{data.board.getBoardInfo().Policy.Education}</td>
             <td>{data.board.getBoardInfo().Policy.Foreign}</td>
             <td>{data.board.getBoardInfo().Policy.Immigration}</td>
@@ -431,12 +511,45 @@ function DataTable() {
             <td>{data.board.getBoardInfo().PolicyVoting.Fiscal}</td>
             <td>{data.board.getBoardInfo().PolicyVoting.Labor}</td>
             <td>{data.board.getBoardInfo().PolicyVoting.Taxation}</td>
+            <td>{data.board.getBoardInfo().PolicyVoting.Health}</td>
             <td>{data.board.getBoardInfo().PolicyVoting.Education}</td>
             <td>{data.board.getBoardInfo().PolicyVoting.Foreign}</td>
             <td>{data.board.getBoardInfo().PolicyVoting.Immigration}</td>
           </tr>
         </tbody>
-      </table><div className="d-flex">
+      </table>
+      <div className="p-2 flex-fill">
+        <h3 className="container text-center">capitalistClass</h3>
+        <table className="table table-borderless">
+          <thead>
+            <tr>
+              <th scope="col">Score</th>
+              <th scope="col">Revenue</th>
+              <th scope="col">Capitalist</th>
+              <th scope="col">influence</th>
+              <th scope="col">Food</th>
+              <th scope="col">Luxury</th>
+              <th scope="col">Health</th>
+              <th scope="col">Education</th>
+              <th scope="col">loan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{data.capitalistclass.getCapitalistInfo().Score}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().Revenue}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().Capitalist}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().Influence}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Food}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Luxury}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Health}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Education}</td>
+              <td>{data.capitalistclass.getCapitalistInfo().loan}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="d-flex">
         <div className="p-2 flex-fill">
           <h3 className="container text-center">State Companies</h3>
           <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
@@ -448,38 +561,15 @@ function DataTable() {
             ))}</div>
         </div>
         <div className="p-2 flex-fill">
-          <h3 className="container text-center">capitalistClass</h3>
-          <table className="table table-borderless">
-            <thead>
-              <tr>
-                <th scope="col">Score</th>
-                <th scope="col">Revenue</th>
-                <th scope="col">Capitalist</th>
-                <th scope="col">influence</th>
-                <th scope="col">Food</th>
-                <th scope="col">Luxury</th>
-                <th scope="col">Health</th>
-                <th scope="col">Education</th>
-                <th scope="col">loan</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{data.capitalistclass.getCapitalistInfo().Score}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().Revenue}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().Capitalist}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().Influence}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Food}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Luxury}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Health}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Education}</td>
-                <td>{data.capitalistclass.getCapitalistInfo().loan}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+          <h3 className="container text-center">capitalistclass Companies</h3>
+          <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
+            {data.capitalistclass.getCapitalistInfo().Company.map((company, index) => (
+              <div key={index} style={{ margin: '50px' }}>
+                <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
+                working
+              </div>
+            ))}</div></div>
+      </div></>
   );
 }
 
@@ -508,52 +598,52 @@ function DataTable() {
 
 
 
-const VotingModal: React.FC<{ isOpen: boolean, onClose: () => void, onSuccess: () => void, name: string }> = ({ isOpen, onClose, onSuccess, name }) => {
-  if (!isOpen) return null;
+// const VotingModal: React.FC<{ isOpen: boolean, onClose: () => void, onSuccess: () => void, name: string }> = ({ isOpen, onClose, onSuccess, name }) => {
+//   if (!isOpen) return null;
 
-  const handleVote = (option: string) => {
-    Board.getInstance().voting(
-      name,
-      option,
-      () => {
-        onSuccess(); // 投票成功
-        onClose();
-      },
-      (error) => {
-        alert(error); // 投票失败
-      }
-    );
-  };
+//   const handleVote = (option: string) => {
+//     Board.getInstance().voting(
+//       name as keyof Policy,
+//       option,
+//       () => {
+//         onSuccess(); // 投票成功
+//         onClose();
+//       },
+//       (error) => {
+//         alert(error); // 投票失败
+//       }
+//     );
+//   };
 
-  return (
-    <>
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        zIndex: 99
-      }} />
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        backgroundColor: 'white',
-        padding: '20px',
-        border: '1px solid black',
-        zIndex: 100
-      }}>
-        <div>{name}'s 当前政策{Board.getInstance().getBoardInfo().Policy[name]}</div>
-        <div>
-          <button onClick={() => handleVote('A')}>A</button>
-          <button onClick={() => handleVote('B')}>B</button>
-          <button onClick={() => handleVote('C')}>C</button>
-        </div>
-        <button onClick={onClose}>Close</button>
-      </div>
-    </>
-  );
-};
+//   return (
+//     <>
+//       <div style={{
+//         position: 'fixed',
+//         top: 0,
+//         left: 0,
+//         width: '100%',
+//         height: '100%',
+//         backgroundColor: 'rgba(0,0,0,0.5)',
+//         zIndex: 99
+//       }} />
+//       <div style={{
+//         position: 'fixed',
+//         top: '50%',
+//         left: '50%',
+//         transform: 'translate(-50%, -50%)',
+//         backgroundColor: 'white',
+//         padding: '20px',
+//         border: '1px solid black',
+//         zIndex: 100
+//       }}>
+//         <div>{name}'s 当前政策{Board.getInstance().getBoardInfo().Policy[name]}</div>
+//         <div>
+//           <button onClick={() => handleVote('A')}>A</button>
+//           <button onClick={() => handleVote('B')}>B</button>
+//           <button onClick={() => handleVote('C')}>C</button>
+//         </div>
+//         <button onClick={onClose}>Close</button>
+//       </div>
+//     </>
+//   );
+// };
