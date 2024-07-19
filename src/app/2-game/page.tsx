@@ -7,7 +7,6 @@ import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
 import { Company } from '@/lib/company';
-import { table } from 'console';
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -25,11 +24,6 @@ interface Action {
 interface Actions {
   basic: Action[];
   free: Action[];
-}
-interface VotingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  name: keyof Board["Policy"];
 }
 interface ActionToggleProps {
   onActionComplete: () => void;
@@ -57,6 +51,7 @@ export default function GameRun() {
       maxTurns: 5
     });
   })
+  const [actionCompleted, setActionCompleted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -164,7 +159,7 @@ export default function GameRun() {
       setActionCompleted(false);
     }
   };
-  function handleInitialization() {
+  const handleInitialization = () => {
     const board = Board.getInstance();
     board.Initialization2p();
     const workerClass = WorkerClass.getInstance();
@@ -189,8 +184,6 @@ export default function GameRun() {
       phase: 'Action'
     }));
   };
-
-  const [actionCompleted, setActionCompleted] = useState(false);
   return (<>
     <>{first && handleInitialization()}</>
     <div className="d-flex">
@@ -200,8 +193,7 @@ export default function GameRun() {
       <button onClick={handleInitialization}>initialization</button>
     </div>
     {DataTable(data)}
-    <ActionToggle onActionComplete={() => setActionCompleted(true)} />
-    {actionCompleted && <button onClick={handleNextRound}>Next Round</button>}
+    <ActionToggle onActionComplete={() => handleNextRound()} />
     {showModal && (
       <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
         <div className="modal-dialog">
@@ -226,11 +218,8 @@ export default function GameRun() {
   </>);
 }
 
-
-
 const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   const [activePath, setActivePath] = useState<number[]>([]);
-  const [isVotingModalOpen, setVotingModalOpen] = useState(false);
   const [votingName, setVotingName] = useState<keyof Policy>('Fiscal');
   const [usedBasicActions, setBasicAction] = useState(false);
   const [usedfreeActions, setfreeAction] = useState(false);
@@ -241,7 +230,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   const openusingModal = (name: keyof GoodsAndServices) => {
     setUsingitem(name);
   };
-
   const actions: Actions = {
     basic: [
       {
@@ -316,7 +304,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     ],
     free: [
       { label: 'Use Healthcare', databstarget: 'Using', onClick: () => openusingModal('Health') },
-      { label: 'Use Education', databstarget: 'UsingEducation', onClick: () => openusingModal('Education') },
+      { label: 'Use Education', databstarget: 'Using', onClick: () => openusingModal('Education') },
       { label: 'Use Luxury', databstarget: 'Using', onClick: () => openusingModal('Luxury') },
       { label: 'pay the loan', databstarget: 'loan' },
       { label: '发钱', databstarget: 'loan', onClick: () => WorkerClass.getInstance().addincome(100) },
@@ -334,7 +322,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       setActivePath([]);
     }
   };
-
   const renderActions = (actionList: Action[], path: number[] = [], keyPrefix: string) => {
 
     if (keyPrefix === 'basic' && usedBasicActions) {
@@ -375,7 +362,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       option,
       () => {
         setBasicAction(true);
-        onActionComplete();
       },
       (error) => {
         alert(error);
@@ -393,6 +379,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       }
     );
   };
+
   const handleloan = () => {
     WorkerClass.getInstance().payoffloan(
       () => {
@@ -403,10 +390,14 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       }
     );
   };
-
+  const handleNextRound = () => {
+    setfreeAction(false);
+    setBasicAction(false);
+    onActionComplete();
+  }
   return (
     <div className="container">
-      <div className="d-flex justify-content-center">
+      <div className="d-flex justify-content-center" id="menu">
         {Object.entries(actions).map(([key, actionList]) => (
           <div className="pp-2 flex-fill" key={key} >
             <div className="text-center">
@@ -414,6 +405,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
               {renderActions(actionList, [], key)}
             </div></div>
         ))}</div>
+      {usedBasicActions && <button onClick={handleNextRound}>Next Round</button>}
       <div className="modal fade" id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -423,9 +415,11 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
             </div>
             <div>{votingName}'s 当前政策{Board.getInstance().getBoardInfo().Policy[votingName]}</div>
             <div className="modal-body">
-              <button onClick={() => handleVote('A')}>A</button>
-              <button onClick={() => handleVote('B')}>B</button>
-              <button onClick={() => handleVote('C')}>C</button>
+              <div className="d-flex justify-content-center" >
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('A')}>A</button>
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('B')}>B</button>
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('C')}>C</button>
+              </div>
             </div>
             {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             <div className="modal-footer">
@@ -443,8 +437,9 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div>{Usingitem}有{WorkerClass.getInstance().getworkingclassInfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
-              <button onClick={() => handleUsing()}>using</button>
+              {Usingitem === 'Education' as keyof GoodsAndServices ? <button className="btn btn-primary" data-bs-target="#UsingEducation" data-bs-toggle="modal">usingeducation</button> : <button onClick={() => handleUsing()}>using</button>}
             </div>
             {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             <div className="modal-footer">
@@ -480,6 +475,29 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
           </div>
         </div>
       </div>
+      <div className="modal fade" id="UsingEducation" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>当前有{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div className="modal-body">
+              <ul>
+              {Board.getInstance().getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+              <div key={index} style={{ margin: '50px' }}>
+                <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
+                {company.requiredWorkers}
+              </div>))}</ul>
+              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -487,7 +505,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
 function DataTable(data: { workerclass: WorkerClass; capitalistclass: CapitalistClass; board: Board; }) {
   return (
     <><h3 className="container text-center">workercalss</h3>
-      <table className="table table-striped table-bordered">
+      <table className="table table-striped table-bordered" id="wokerclass information">
         <thead>
           <tr className="container text-center">
             <th>population</th>
@@ -657,75 +675,3 @@ function working(company: Company): boolean {
   return Workers === company.requiredWorkers && skilledWorker >= company.skilledworker;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const VotingModal: React.FC<{ isOpen: boolean, onClose: () => void, onSuccess: () => void, name: string }> = ({ isOpen, onClose, onSuccess, name }) => {
-//   if (!isOpen) return null;
-
-//   const handleVote = (option: string) => {
-//     Board.getInstance().voting(
-//       name as keyof Policy,
-//       option,
-//       () => {
-//         onSuccess(); // 投票成功
-//         onClose();
-//       },
-//       (error) => {
-//         alert(error); // 投票失败
-//       }
-//     );
-//   };
-
-//   return (
-//     <>
-//       <div style={{
-//         position: 'fixed',
-//         top: 0,
-//         left: 0,
-//         width: '100%',
-//         height: '100%',
-//         backgroundColor: 'rgba(0,0,0,0.5)',
-//         zIndex: 99
-//       }} />
-//       <div style={{
-//         position: 'fixed',
-//         top: '50%',
-//         left: '50%',
-//         transform: 'translate(-50%, -50%)',
-//         backgroundColor: 'white',
-//         padding: '20px',
-//         border: '1px solid black',
-//         zIndex: 100
-//       }}>
-//         <div>{name}'s 当前政策{Board.getInstance().getBoardInfo().Policy[name]}</div>
-//         <div>
-//           <button onClick={() => handleVote('A')}>A</button>
-//           <button onClick={() => handleVote('B')}>B</button>
-//           <button onClick={() => handleVote('C')}>C</button>
-//         </div>
-//         <button onClick={onClose}>Close</button>
-//       </div>
-//     </>
-//   );
-// };

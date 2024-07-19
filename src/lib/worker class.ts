@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
 import { CapitalistCompanys } from "@/lib/Capitalist class"
 import { StateCompanies } from './board';
-interface Worker {
+export interface Worker {
     skill: string;
     location: Company | null;
 }
@@ -182,13 +182,21 @@ export class WorkerClass extends EventEmitter {
         });
     }
     addWorker(skill: string, location: Company | null) {
-        this.population.worker.push({ skill, location });
+
+        const worker = { skill, location };
+
+        this.population.worker.push(worker);
+
         this.calculatePopulationLevel();
-        if (location!=null) {
+
+        if (location != null) {
+            location.workingworkers.push(worker);
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
         }
-        console.log('test update event');
+        else{
+            
+        }
         this.emit('update');
     }
     upgrade(worker: Worker) {

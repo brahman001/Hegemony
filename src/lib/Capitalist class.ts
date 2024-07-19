@@ -109,6 +109,7 @@ export class CapitalistClass extends EventEmitter {
 export const CapitalistCompanys: CapitalistCompany[] = [
     {
         name: "TV_STATION_8",
+        workingworkers:[],
         cost: 8,
         industry: 'Media',
         requiredWorkers: 2,
@@ -126,6 +127,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Healthcare',
         requiredWorkers: 2,
@@ -143,6 +145,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FARM_8",
+        workingworkers:[],
         cost: 8,
         industry: 'Agriculture',
         requiredWorkers: 2,
@@ -160,6 +163,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "TV_STATION_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Media',
         requiredWorkers: 2,
@@ -177,6 +181,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "TV_STATION_12",
+        workingworkers:[],
         cost: 12,
         industry: 'Media',
         requiredWorkers: 3,
@@ -194,6 +199,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_8",
+        workingworkers:[],
         cost: 8,
         industry: 'Luxury',
         requiredWorkers: 2,
@@ -211,6 +217,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FARM_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Agriculture',
         requiredWorkers: 2,
@@ -228,6 +235,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "TV_STATION_24",
+        workingworkers:[],
         cost: 24,
         industry: 'Media',
         requiredWorkers: 3,
@@ -245,6 +253,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FARM_15",
+        workingworkers:[],
         cost: 15,
         industry: 'Agriculture',
         requiredWorkers: 3,
@@ -262,6 +271,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Luxury',
         requiredWorkers: 2,
@@ -279,6 +289,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FARM_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Agriculture',
         requiredWorkers: 3,
@@ -296,6 +307,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_basic",
+        workingworkers:[],
         cost: 16,
         industry: 'Luxury',
         requiredWorkers: 2,
@@ -313,6 +325,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Healthcare',
         requiredWorkers: 2,
@@ -330,6 +343,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "UNIVERSITY_16",
+        workingworkers:[],
         cost: 16,
         industry: 'Education',
         requiredWorkers: 2,
@@ -347,6 +361,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_15",
+        workingworkers:[],
         cost: 15,
         industry: 'Luxury',
         requiredWorkers: 3,
@@ -364,6 +379,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Healthcare',
         requiredWorkers: 2,
@@ -381,6 +397,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "UNIVERSITY_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Education',
         requiredWorkers: 2,
@@ -398,6 +415,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Healthcare',
         requiredWorkers: 3,
@@ -415,6 +433,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "UNIVERSITY_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Education',
         requiredWorkers: 3,
@@ -432,6 +451,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_24",
+        workingworkers:[],
         cost: 24,
         industry: 'Healthcare',
         requiredWorkers: 3,
@@ -449,6 +469,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "UNIVERSITY_24",
+        workingworkers:[],
         cost: 24,
         industry: 'Education',
         requiredWorkers: 3,
@@ -466,6 +487,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_20",
+        workingworkers:[],
         cost: 20,
         industry: 'Luxury',
         requiredWorkers: 3,
@@ -483,6 +505,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FACTORY_basic",
+        workingworkers:[],
         cost: 16,
         industry: 'Luxury',
         requiredWorkers: 2,
@@ -500,6 +523,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "FARM_basic",
+        workingworkers:[],
         cost: 16,
         industry: 'Agriculture',
         requiredWorkers: 2,
@@ -517,6 +541,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "HOSPITAL_basic",
+        workingworkers:[],
         cost: 16,
         industry: 'Healthcare',
         requiredWorkers: 2,
@@ -534,6 +559,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
     },
     {
         name: "UNIVERSITY_basic",
+        workingworkers:[],
         cost: 16,
         industry: 'Education',
         requiredWorkers: 2,

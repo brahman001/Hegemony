@@ -1,4 +1,4 @@
-import { WorkerClass } from "./worker class";
+import { WorkerClass, Worker } from "./worker class";
 import { CapitalistClass } from "./Capitalist class"
 import { Board } from "./board";
 
@@ -22,11 +22,13 @@ export class Company {
   industry: String;
   skilledworker: number
   requiredWorkers: number;
+  workingworkers: Worker[];
   goodsProduced: number;
   wages: Wages;
   imageUrl: string;
 
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>,imageUrl:string) {
+  constructor(name: string, workingworkers: [],
+    cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, imageUrl: string) {
     this.name = name;
     this.cost = cost;
     this.industry = industry;
@@ -40,29 +42,15 @@ export class Company {
       L3: wages.L3 || 0,
     };
     this.imageUrl = imageUrl;
+    this.workingworkers = workingworkers;
   }
-
-  // public working(): boolean {
-  //   const worker = WorkerClass.getInstance().getworkingclassInfo().population.worker;
-  //   let Workers = 0, skilledWorker = 0;
-  
-  //   for (let i = 0; i < worker.length; i++) {
-  //     if (worker[i].location === this) {
-  //       Workers++; // 移动计数器到内部条件
-  //       if (worker[i].skill !== 'unskill') {
-  //         skilledWorker++;
-  //       }
-  //     }
-  //   }
-  
-  //   return Workers === this.requiredWorkers && skilledWorker >= this.skilledworker;
-  // }
 }
 export class CapitalistCompany extends Company {
 
   machineryBonus: MachineryBonus;
-  constructor(name: string, cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>,imageUrl:string) {
-    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages,imageUrl);
+  constructor(name: string, workingworkers: [],
+    cost: number, industry: string, requiredWorkers: number, skilledworker: number, goodsProduced: number, wages: Partial<Wages>, machineryBonus: Partial<MachineryBonus>, imageUrl: string) {
+    super(name, workingworkers, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages, imageUrl);
     this.machineryBonus = {
       function: machineryBonus.function || false,
       Bonus: machineryBonus.Bonus || 0,
@@ -73,6 +61,7 @@ export class CapitalistCompany extends Company {
 export class StateCompany extends Company {
   constructor(
     name: string,
+    workingworkers: [],
     cost: number,
     industry: string,
     requiredWorkers: number,
@@ -81,7 +70,7 @@ export class StateCompany extends Company {
     wages: Wages,
     imageUrl: string
   ) {
-    super(name, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages, imageUrl);
+    super(name, workingworkers, cost, industry, requiredWorkers, skilledworker, goodsProduced, wages, imageUrl);
   }
 
 }
