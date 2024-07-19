@@ -1,5 +1,6 @@
 import { CapitalistCompany } from './company'
 import { EventEmitter } from 'events';
+import { parse, stringify } from 'flatted';
 interface CapitalistGoodsAndServices {
     Food: number;
     Luxury: number;
@@ -38,7 +39,7 @@ export class CapitalistClass extends EventEmitter {
             const saveddata = localStorage.getItem('CapitalistClass');
             if (saveddata) {
                 CapitalistClass.instance = new CapitalistClass();
-                CapitalistClass.instance.SetCapitalistClass(JSON.parse(saveddata));
+                CapitalistClass.instance.SetCapitalistClass(parse(saveddata));
             } else {
                 CapitalistClass.instance = new CapitalistClass();
             }

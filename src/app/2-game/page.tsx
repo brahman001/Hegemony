@@ -2,11 +2,12 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import React, { useState, useEffect, ReactElement } from 'react';
-import { WorkerClass, GoodsAndServices } from '../../lib/worker class';
+import { WorkerClass, GoodsAndServices, Worker } from '../../lib/worker class';
 import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
 import { Company } from '@/lib/company';
+import { parse, stringify } from 'flatted';
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -36,9 +37,9 @@ export default function GameRun() {
       const savedState = localStorage.getItem('gameState');
       if (savedState) {
         try {
-          return JSON.parse(savedState);
+          return parse(savedState); // Use flatted's parse
         } catch (e) {
-          console.error('Error parsing game state from localStorage', e);
+          console.error('Error parsing game state from localStorage using flatted', e);
         }
       }
     }
@@ -50,9 +51,10 @@ export default function GameRun() {
       maxRounds: 5,
       maxTurns: 5
     });
-  })
-  const [actionCompleted, setActionCompleted] = useState(false);
+  });
+
   const [showModal, setShowModal] = useState(false);
+  const [ActionCompleted, setActionCompleted] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBoard = localStorage.getItem('Board');
@@ -62,7 +64,7 @@ export default function GameRun() {
       if (savedBoard) {
         try {
           const board = Board.getInstance();
-          Object.assign(board, JSON.parse(savedBoard));
+          Object.assign(board, parse(savedBoard)); // 使用 flatted 的 parse 方法
         } catch (e) {
           console.error('Error parsing board state from localStorage', e);
         }
@@ -71,7 +73,7 @@ export default function GameRun() {
       if (savedWorkerClass) {
         try {
           const workerClass = WorkerClass.getInstance();
-          Object.assign(workerClass, JSON.parse(savedWorkerClass));
+          Object.assign(workerClass, parse(savedWorkerClass)); // 使用 flatted 的 parse 方法
           if (workerClass.getworkingclassInfo().population.worker.length < 10) {
             setfirst(true);
           }
@@ -79,10 +81,11 @@ export default function GameRun() {
           console.error('Error parsing worker class state from localStorage', e);
         }
       }
+
       if (savedCapitalistClass) {
         try {
           const capitalistClass = CapitalistClass.getInstance();
-          Object.assign(capitalistClass, JSON.parse(savedCapitalistClass));
+          Object.assign(capitalistClass, parse(savedCapitalistClass)); // 使用 flatted 的 parse 方法
         } catch (e) {
           console.error('Error parsing capitalist class state from localStorage', e);
         }
@@ -102,10 +105,13 @@ export default function GameRun() {
   }, [gameState.currentTurn, gameState.maxTurns]);
 
   useEffect(() => {
-    localStorage.setItem('gameState', JSON.stringify(gameState));
-    localStorage.setItem('Board', JSON.stringify(Board.getInstance()));
-    localStorage.setItem('WorkerClass', JSON.stringify(WorkerClass.getInstance()));
-    localStorage.setItem('CapitalistClass', JSON.stringify(CapitalistClass.getInstance()));
+    localStorage.setItem('gameState', stringify(gameState));
+    const board = Board.getInstance();
+    localStorage.setItem('Board', stringify(board)); // 使用 flatted 的 stringify 方法 
+    const workerClass = WorkerClass.getInstance();
+    localStorage.setItem('WorkerClass', stringify(workerClass)); // 使用 flatted 的 stringify 方法 
+    const capitalistClass = CapitalistClass.getInstance();
+    localStorage.setItem('CapitalistClass', stringify(capitalistClass)); // 使用 flatted 的 stringify 方法
   }, [gameState]);
   const [data, setData] = useState({
     workerclass: WorkerClass.getInstance(),
@@ -204,7 +210,7 @@ export default function GameRun() {
             </div>
             <div className="modal-body">
               <p>The game is ready to play!</p>
-              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Agriculture", null); handleCloseModal(); }}>Agriculture</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Acriculture", null); handleCloseModal(); }}>Agriculture</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Luxury", null); handleCloseModal(); }}>Luxury</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathcare", null); handleCloseModal(); }}>Heathcare</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Education", null); handleCloseModal(); }}>Education</button>
@@ -217,13 +223,13 @@ export default function GameRun() {
       </div>)}
   </>);
 }
-
 const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   const [activePath, setActivePath] = useState<number[]>([]);
   const [votingName, setVotingName] = useState<keyof Policy>('Fiscal');
   const [usedBasicActions, setBasicAction] = useState(false);
   const [usedfreeActions, setfreeAction] = useState(false);
   const [Usingitem, setUsingitem] = useState<keyof GoodsAndServices>('Health');
+  const [usingworker, setusingworker] = useState<Worker>();
   const openModalWithVoting = (name: keyof Policy) => {
     setVotingName(name);
   };
@@ -379,7 +385,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       }
     );
   };
-
   const handleloan = () => {
     WorkerClass.getInstance().payoffloan(
       () => {
@@ -485,11 +490,34 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
             <div>当前有{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
               <ul>
-              {Board.getInstance().getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-              <div key={index} style={{ margin: '50px' }}>
-                <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
-                {company.requiredWorkers}
-              </div>))}</ul>
+                {Board.getInstance().getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                  <div key={index} style={{ margin: '50px' }}>
+                    {company.workingworkers.length > 0 && company.workingworkers.filter(worker => worker.skill === "unskill") && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                    {company.workingworkers && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                      <div key={index2}>{worker.skill === "unskill" && <button onClick={() => setusingworker(worker)} className="btn btn-primary" data-bs-target="#upgrade" data-bs-toggle="modal" >Train Worker</button>}</div>))}
+                  </div>))}</ul>
+              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="modal fade" id="upgrade" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>当前有{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div className="modal-body">
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Acriculture')}>Acriculture</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury')}>Luxury</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathcare')}>Heathcare</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education')}>Education</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media')}>Media</button>
               {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             </div>
             <div className="modal-footer">
@@ -500,6 +528,14 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       </div>
     </div>
   );
+
+
+
+
+
+
+
+
 };
 
 function DataTable(data: { workerclass: WorkerClass; capitalistclass: CapitalistClass; board: Board; }) {
@@ -546,7 +582,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
         </tbody>
       </table>
       <h3 className="container text-center">State</h3>
-      <table className="table table-striped table-bordered">
+      <table className="table table-striped table-bordered" id="state information">
         <thead>
           <tr>
             <th scope="col">Deal</th>
@@ -598,7 +634,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
       </table>
       <div className="p-2 flex-fill">
         <h3 className="container text-center">capitalistClass</h3>
-        <table className="table table-borderless">
+        <table className="table table-borderless" id="Capitialist information">
           <thead>
             <tr>
               <th scope="col">Score</th>

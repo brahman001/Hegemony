@@ -2,6 +2,7 @@ import { WorkerClass, Worker } from "./worker class";
 import { EventEmitter } from 'events';
 import { StateCompany } from './company'
 import { Company } from "./company";
+import { parse, stringify } from 'flatted';
 export interface Policy {
     Fiscal: string;
     Labor: string;
@@ -22,7 +23,7 @@ export interface BusinessDeal {
     item: string;
     amount: number;
     price: number;
-    tax?: { [key: string]: number };
+    tax: { [key: string]: number };
     imageUrl: string;
 }
 
@@ -108,7 +109,7 @@ export class Board extends EventEmitter {
             const saveddata = localStorage.getItem('Board');
             if (saveddata) {
                 Board.instance = new Board();
-                Board.instance.setBoard(JSON.parse(saveddata));
+                Board.instance.setBoard(parse(saveddata));
             } else {
                 Board.instance = new Board();
             }

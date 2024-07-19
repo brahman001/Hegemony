@@ -2,11 +2,12 @@ import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
 import { CapitalistCompanys } from "@/lib/Capitalist class"
 import { StateCompanies } from './board';
+import { parse, stringify } from 'flatted';
+type skillkind = 'Acriculture' | 'Luxury' | 'Heathcare' | 'Education' | 'Media' | 'unskill';
 export interface Worker {
-    skill: string;
+    skill: skillkind;
     location: Company | null;
 }
-
 interface Population {
     Natureofposition: {
         Acriculture: number;
@@ -18,6 +19,7 @@ interface Population {
     worker: Worker[];
     population_level: number;
 }
+
 interface TradeUnions {
     Acriculture: boolean;
     Luxury: boolean;
@@ -80,16 +82,23 @@ export class WorkerClass extends EventEmitter {
     }
     public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
-            const saveddata = localStorage.getItem('WorkerClass');
-            if (saveddata) {
+            const savedData = localStorage.getItem('WorkerClass');
+            if (savedData) {
+                // Use flatted.parse instead of JSON.parse
                 WorkerClass.instance = new WorkerClass();
-                WorkerClass.instance.SetWorkerClass(JSON.parse(saveddata));
+                WorkerClass.instance.setWorkerClass(parse(savedData));
             } else {
                 WorkerClass.instance = new WorkerClass();
             }
         }
         return WorkerClass.instance;
     }
+
+    // Method to restore properties from parsed data
+    setWorkerClass(data: any): void {
+        Object.assign(this, data);
+    }
+
     Initialization2P() {
         this.loan = 0;
         this.score = 0;
@@ -181,34 +190,24 @@ export class WorkerClass extends EventEmitter {
             }
         });
     }
-    addWorker(skill: string, location: Company | null) {
-
-        const worker = { skill, location };
-
+    addWorker(skill: skillkind, location: Company | null) {
+        const worker = { skill,location};
         this.population.worker.push(worker);
-
         this.calculatePopulationLevel();
-
         if (location != null) {
             location.workingworkers.push(worker);
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
         }
-        else{
-            
+        else {
         }
         this.emit('update');
     }
-    upgrade(worker: Worker) {
-        for (let i = 0; i < this.population.worker.length; i++) {
-            const worker = this.population.worker[i];
-            if (worker.skill === 'unskilled' && worker.location === null) {
-                worker.skill = 'skilled';
-                console.log(`Worker at index ${i} has been upgraded.`);
-                return;
-            }
+    upgrade(worker: Worker, aim: skillkind) {
+        if (worker.skill === 'unskill') {
+            worker.skill = aim;
+            return;
         }
-        console.log('No worker was eligible for upgrade.');
     }
     using(item: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
         switch (item) {
@@ -244,7 +243,6 @@ export class WorkerClass extends EventEmitter {
         this.emit('update', errorMessage);
         onError(errorMessage);
     }
-
     payoffloan(onSuccess: () => void, onError: (message: string) => void) {
         this.income -= 50;
         this.loan--;
@@ -259,7 +257,6 @@ export class WorkerClass extends EventEmitter {
         this.income += number;
         this.emit('update');
     }
-
     getworkingclassInfo() {
         return {
             population: this.population,
