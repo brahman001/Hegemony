@@ -1,8 +1,9 @@
 import { WorkerClass, Worker } from "./worker class";
 import { EventEmitter } from 'events';
-import { StateCompany } from './company'
+import { StateCompany, StateCompanies } from './company'
 import { Company } from "./company";
 import { parse, stringify } from 'flatted';
+import { CapitalistClass } from "./Capitalist class";
 export interface Policy {
     Fiscal: string;
     Labor: string;
@@ -12,13 +13,11 @@ export interface Policy {
     Foreign: string;
     Immigration: string;
 }
-
 export interface PublicServices {
     Health: number;
     Education: number;
     Influence: number;
 }
-
 export interface BusinessDeal {
     item: string;
     amount: number;
@@ -26,13 +25,11 @@ export interface BusinessDeal {
     tax: { [key: string]: number };
     imageUrl: string;
 }
-
 export interface Export {
     item: string;
     amount: number;
     price: number;
 }
-
 interface Import {
     item: string;
     amount: number;
@@ -42,10 +39,14 @@ interface Import {
 interface VotingRules {
     [key: string]: string[];
 }
+interface Votingbag {
+    Workerclass: number;
+    Capitalistclass: number;
+}
 export class Board extends EventEmitter {
     private player: number;
-    private mainaction: Boolean;
-    private freeaction: Boolean;
+    private Votingbag: Votingbag;
+    private Votingresult: Votingbag;
     private static instance: Board;
     private Policy: Policy;
     private StateTreasury: number;
@@ -53,19 +54,27 @@ export class Board extends EventEmitter {
     private BusinessDeal: BusinessDeal;
     private Export: Export[];
     private Import: Import[];
-    private unempolyedworker: Worker[] = [];
-    private StateCompany: StateCompany[] = [];
+    private StateCompany: StateCompany[];
     private PolicyVoting: Policy;
+    private policyVotingone: keyof Policy;
     private votingRules: VotingRules;
     private loan: number;
     private unempolyment: Worker[];
     constructor() {
         super();
+        this.policyVotingone = "Fiscal"!;
+        this.Votingresult = {
+            Workerclass: 0,
+            Capitalistclass: 0,
+        }
+        this.StateCompany = [];
+        this.Votingbag = {
+            Workerclass: 0,
+            Capitalistclass: 0,
+        };
         this.unempolyment = [];
         this.player = 2;
         this.loan = 0;
-        this.mainaction = false;
-        this.freeaction = false;
         this.Policy = {
             Fiscal: 'C',
             Labor: 'B',
@@ -118,20 +127,25 @@ export class Board extends EventEmitter {
     }
     setBoard(data: Board) {
         this.loan = data.loan;
-        this.mainaction = data.mainaction;
-        this.freeaction = data.freeaction;
         this.Policy = data.Policy;
         this.Export = data.Export;
         this.StateTreasury = data.StateTreasury;
         this.PublicServices = data.PublicServices;
         this.BusinessDeal = data.BusinessDeal;
         this.PolicyVoting = data.PolicyVoting;
-        this.setcompany2p();
+        this.StateCompany = data.StateCompany;
     }
     Initialization2p() {
+        this.Votingresult = {
+            Workerclass: 0,
+            Capitalistclass: 0,
+        }
+        this.unempolyment = [];
         this.loan = 0;
-        this.mainaction = false;
-        this.freeaction = false;
+        this.Votingbag = {
+            Workerclass: 5,
+            Capitalistclass: 5,
+        }
         this.Policy = {
             Fiscal: 'C',
             Labor: 'B',
@@ -162,6 +176,7 @@ export class Board extends EventEmitter {
             Foreign: '',
             Immigration: '',
         };
+
         this.setcompany2p();
     };
     setPolicy(policyType: keyof Policy, policyValue: string): void {
@@ -176,7 +191,7 @@ export class Board extends EventEmitter {
     }
     addPublicService(industry: String, number: number) {
         switch (industry) {
-            case 'Heathcare':
+            case 'Heathlcare':
                 this.PublicServices.Health += number;
                 break;
             case 'Education':
@@ -204,8 +219,10 @@ export class Board extends EventEmitter {
         this.Import.push({ item, amount, price });
         this.emit('update', `Export added: ${item}, Amount: ${amount}, Price: $${price}`);
     }
-    getBoardInfo() {
+    getinfo() {
         return {
+            Votingresult: this.Votingresult,
+            Votingbag: this.Votingbag,
             Policy: this.Policy,
             PolicyVoting: this.PolicyVoting,
             StateTreasury: this.StateTreasury,
@@ -215,7 +232,7 @@ export class Board extends EventEmitter {
             Import: this.Import,
             companys: this.StateCompany,
             loan: this.loan,
-            unempolyedworker: this.unempolyedworker
+            unempolyment: this.unempolyment
         };
     }
     setBusinessDeal() {
@@ -223,6 +240,7 @@ export class Board extends EventEmitter {
         this.emit('update');
     }
     setcompany2p() {
+        this.StateCompany = [];
         switch (this.Policy.Fiscal) {
             case 'A':
                 this.StateCompany = [StateCompanies[3], StateCompanies[7], StateCompanies[11]];
@@ -244,11 +262,12 @@ export class Board extends EventEmitter {
         }
         this.emit('update');
     }
-    voting(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
+    votingabill(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
             const currentGrade = this.Policy[policy];
             if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
                 this.PolicyVoting[policy] = votingAim;
+                this.policyVotingone = policy;
                 this.emit('update');
                 onSuccess();
             } else {
@@ -263,17 +282,102 @@ export class Board extends EventEmitter {
         }
     }
     addworker(Worker: Worker) {
-        this.unempolyedworker.push(Worker);
+        this.unempolyment.push(Worker);
     }
-
     removeworker(Worker: Worker, location: Company) {
-        const index = this.unempolyedworker.indexOf(Worker);
+        const index = this.unempolyment.indexOf(Worker);
         if (index !== -1) {
-            this.unempolyedworker.splice(index, 1);
+            this.unempolyment.splice(index, 1);
             location.workingworkers.push(Worker);
         }
     }
+    swapworker(Worker: Worker, location: Company, onSuccess: () => void, onError: (message: string) => void) {
+
+        const index1 = this.unempolyment.findIndex(w => w.skill === 'unskill');
+
+        if (index1 === -1) {
+            onError('No unskilled workers are unemployed');
+            return;
+        }
+
+        // Add the unskilled worker to the company
+        const unskilledWorker = this.unempolyment[index1];
+        location.workingworkers.push(unskilledWorker);
+        this.unempolyment.splice(index1, 1);
+
+        // Remove the specified worker from the company
+        const index2 = location.workingworkers.findIndex(w => w === Worker);
+
+        if (index2 !== -1) {
+            location.workingworkers.splice(index2, 1);
+        } else {
+            onError('Worker not found in the company');
+            return;
+        }
+        this.addworker(Worker);
+        this.emit('update');
+        onSuccess();
+    }
+    Votingrapidly(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
+        if (this.Policy.hasOwnProperty(policy)) {
+            const currentGrade = this.Policy[policy];
+            if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim)
+                && (!this.PolicyVoting[policy] || this.PolicyVoting[policy] === votingAim)) {
+                this.PolicyVoting[policy] = votingAim;
+                this.policyVotingone = policy;
+                this.Votingforbag();
+                onSuccess();
+                this.emit('update');
+            } else {
+                const errorMessage = `Invalid voting aim or policy already voted: ${policy}`;
+                this.emit('update', errorMessage);
+                onError(errorMessage);
+            }
+        } else {
+            const errorMessage = `Invalid policy: ${policy}`;
+            this.emit('voteError', errorMessage);
+            onError(errorMessage);
+        }
+    }
+    fillvotingbag() {
+        this.Votingbag.Workerclass += WorkerClass.getInstance().getinfo().population.population_level;
+        this.Votingbag.Capitalistclass += Math.ceil(CapitalistClass.getInstance().getinfo().companys.length / 2);
+    }
+    Votingforbag() {
+        let totalBalls = this.Votingbag.Capitalistclass + this.Votingbag.Workerclass
+        if (totalBalls < 5) {
+            this.fillvotingbag();
+        }
+        for (let i = 0; i < 5; i++) {
+            totalBalls = this.Votingbag.Capitalistclass + this.Votingbag.Workerclass;
+            const randomIndex = Math.floor(Math.random() * totalBalls);
+            if (randomIndex < this.Votingbag.Workerclass) {
+                this.Votingbag.Workerclass--;
+                this.Votingresult.Workerclass++;
+            } else if (randomIndex < this.Votingbag.Capitalistclass + this.Votingbag.Workerclass) {
+                this.Votingbag.Capitalistclass--;
+                this.Votingresult.Capitalistclass++;
+            }
+        }
+    }
+
+    public Voting2(inputValue: number) {
+        if ((inputValue + this.Votingresult.Workerclass) >= this.Votingresult.Capitalistclass) {
+            this.Policy[this.policyVotingone] = this.PolicyVoting[this.policyVotingone];
+            this.PolicyVoting[this.policyVotingone] = '';
+            this.Votingbag.Capitalistclass += this.Votingresult.Capitalistclass;
+            WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 3);
+        } else {
+            this.Votingbag.Workerclass += this.Votingresult.Workerclass;
+            this.PolicyVoting[this.policyVotingone] = '';
+            console.log(this.PolicyVoting[this.policyVotingone]);
+        }
+        this.Votingresult.Capitalistclass = 0;
+        this.Votingresult.Workerclass = 0;
+        this.emit("updata");
+    }
 }
+
 const BusinessDealcards: BusinessDeal[] = [
     { item: "Food", amount: 6, price: 40, tax: { "A": 12, "B": 6, "C": 0 }, imageUrl: "/6food.jpg" },
     { item: "Food", amount: 7, price: 50, tax: { "A": 14, "B": 7, "C": 0 }, imageUrl: "/7food.jpg" },
@@ -282,54 +386,5 @@ const BusinessDealcards: BusinessDeal[] = [
     { item: "Luxury", amount: 10, price: 40, tax: { "A": 20, "B": 10, "C": 0 }, imageUrl: "/10Luxury.jpg" },
     { item: "Luxury", amount: 12, price: 50, tax: { "A": 24, "B": 12, "C": 0 }, imageUrl: "/12Luxury.jpg" },
 ];
-export const StateCompanies: StateCompany[] = [
-    {
-        name: "UNIVERSITY_3-4p", workingworkers: [],
-        cost: 30, industry: 'Education', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/University_3-4p.jpg"
-    },
-    {
-        name: "UNIVERSITY_3-2p", workingworkers: [],
-        cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_3-2p.jpg"
-    },
-    {
-        name: "UNIVERSITY_2", workingworkers: [],
-        cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_2.jpg"
-    },
-    {
-        name: "UNIVERSITY_1", workingworkers: [],
-        cost: 20, industry: 'Education', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/University_1.jpg"
-    },
-    {
-        name: "HOSPITAL_3-4p", workingworkers: [],
-        cost: 30, industry: 'Healthcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/Hospital_3-4p.jpg"
-    },
-    {
-        name: "HOSPITAL_3-2p", workingworkers: [],
-        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_3-2p.jpg"
-    },
-    {
-        name: "HOSPITAL_2", workingworkers: [],
-        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_2.jpg"
-    },
-    {
-        name: "HOSPITAL_1", workingworkers: [],
-        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/Hospital_1.jpg"
-    },
-    {
-        name: "TV STATION_3-4p", workingworkers: [],
-        cost: 30, industry: 'Media', requiredWorkers: 3, skilledworker: 1, goodsProduced: 4, wages: { level: "L2", L1: 35, L2: 30, L3: 25 }, imageUrl: "/StateCompanies/TVStation_3-2p.jpg"
-    },
-    {
-        name: "TV STATION_3-2p", workingworkers: [],
-        cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_3-2p.jpg"
-    },
-    {
-        name: "TV STATION_2", workingworkers: [],
-        cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_2.jpg"
-    },
-    {
-        name: "TV STATION_1", workingworkers: [],
-        cost: 20, industry: 'Media', requiredWorkers: 2, skilledworker: 1, goodsProduced: 3, wages: { level: "L2", L1: 25, L2: 20, L3: 15 }, imageUrl: "/StateCompanies/TVStation_1.jpg"
-    },
-];
+
 

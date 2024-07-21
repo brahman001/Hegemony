@@ -6,8 +6,9 @@ import { WorkerClass, GoodsAndServices, Worker } from '../../lib/worker class';
 import { CapitalistClass } from '@/lib/Capitalist class';
 import { Board, Policy } from '@/lib/board';
 import Image from 'next/image'
-import { Company } from '@/lib/company';
+import { CapitalistCompany, Company } from '@/lib/company';
 import { parse, stringify } from 'flatted';
+
 interface GameState {
   currentTurn: number;
   currentRound: number;
@@ -28,6 +29,10 @@ interface Actions {
 }
 interface ActionToggleProps {
   onActionComplete: () => void;
+  usedBasicActions: boolean;
+  usedfreeActions: boolean;
+  setBasicAction: () => void;
+  setfreeAction: () => void;
 }
 
 export default function GameRun() {
@@ -52,9 +57,10 @@ export default function GameRun() {
       maxTurns: 5
     });
   });
-
   const [showModal, setShowModal] = useState(false);
-  const [ActionCompleted, setActionCompleted] = useState(false);
+  const [usedBasicActions, setUsedBasicActions] = useState(false);
+  const [usedfreeActions, setUsedFreeActions] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBoard = localStorage.getItem('Board');
@@ -74,7 +80,7 @@ export default function GameRun() {
         try {
           const workerClass = WorkerClass.getInstance();
           Object.assign(workerClass, parse(savedWorkerClass)); // 使用 flatted 的 parse 方法
-          if (workerClass.getworkingclassInfo().population.worker.length < 10) {
+          if (workerClass.getinfo().population.worker.length < 10) {
             setfirst(true);
           }
         } catch (e) {
@@ -152,6 +158,8 @@ export default function GameRun() {
   const handleNextRound = () => {
     if (gameState.phase === 'Production') {
       if (gameState.currentTurn <= gameState.maxTurns) {
+        //Board.getInstance().Voting();
+
         setGameState(prev => ({
           ...prev,
           currentTurn: prev.currentTurn + 1,
@@ -159,19 +167,22 @@ export default function GameRun() {
           phase: 'Action'
         }));
       }
-      setActionCompleted(false);
+      setUsedBasicActions(false);
+      setUsedFreeActions(false);
     } else {
       setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1 }));
-      setActionCompleted(false);
+      setUsedBasicActions(false);
+      setUsedFreeActions(false);
     }
   };
   const handleInitialization = () => {
     const board = Board.getInstance();
     board.Initialization2p();
-    const workerClass = WorkerClass.getInstance();
-    workerClass.Initialization2P();
     const capitalistClass = CapitalistClass.getInstance();
     capitalistClass.Initialization();
+    const workerClass = WorkerClass.getInstance();
+    workerClass.Initialization2P();
+
     setGameState(prevState => ({
       ...prevState,
       currentTurn: 1,
@@ -180,6 +191,8 @@ export default function GameRun() {
     }));
     setfirst(false);
     setShowModal(true);
+    setUsedBasicActions(false);
+    setUsedFreeActions(false)
   }
   const handleCloseModal = () => {
     setShowModal(false);
@@ -190,6 +203,14 @@ export default function GameRun() {
       phase: 'Action'
     }));
   };
+  const updateData = () => {
+    console.log('Updating data', {
+      workerclass: WorkerClass.getInstance(),
+      capitalistclass: CapitalistClass.getInstance(),
+      board: Board.getInstance(),
+    });
+  }
+
   return (<>
     <>{first && handleInitialization()}</>
     <div className="d-flex">
@@ -197,22 +218,28 @@ export default function GameRun() {
       <p className="p-2 flex-fill">Turn: {gameState.currentTurn}</p>
       <p className="p-2 flex-fill">Round: {gameState.currentRound}</p>
       <button onClick={handleInitialization}>initialization</button>
+      <button onClick={updateData}>information</button>
     </div>
     {DataTable(data)}
-    <ActionToggle onActionComplete={() => handleNextRound()} />
+    <ActionToggle
+      onActionComplete={() => handleNextRound()}
+      usedBasicActions={usedBasicActions}
+      usedfreeActions={usedfreeActions}
+      setBasicAction={() => setUsedBasicActions(true)}
+      setfreeAction={() => setUsedFreeActions(true)}
+    />
     {showModal && (
       <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">Game Initialized</h5>
-              <button type="button" className="btn-close" onClick={handleCloseModal}></button>
             </div>
             <div className="modal-body">
               <p>The game is ready to play!</p>
-              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Acriculture", null); handleCloseModal(); }}>Agriculture</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Agriculture", null); handleCloseModal(); }}>Agriculture</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Luxury", null); handleCloseModal(); }}>Luxury</button>
-              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathcare", null); handleCloseModal(); }}>Heathcare</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathlcare", null); handleCloseModal(); }}>Heathlcare</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Education", null); handleCloseModal(); }}>Education</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Media", null); handleCloseModal(); }}>Media</button>
             </div>
@@ -223,13 +250,14 @@ export default function GameRun() {
       </div>)}
   </>);
 }
-const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
+const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasicActions, usedfreeActions, setBasicAction, setfreeAction }) => {
   const [activePath, setActivePath] = useState<number[]>([]);
   const [votingName, setVotingName] = useState<keyof Policy>('Fiscal');
-  const [usedBasicActions, setBasicAction] = useState(false);
-  const [usedfreeActions, setfreeAction] = useState(false);
   const [Usingitem, setUsingitem] = useState<keyof GoodsAndServices>('Health');
   const [usingworker, setusingworker] = useState<Worker>();
+  const [votingrapidly, setvotingrapidly] = useState(false);
+  const [showVotingModal, setShowModal] = useState(false);
+  const [inputValue, setInputValue] = useState<number>(0);
   const openModalWithVoting = (name: keyof Policy) => {
     setVotingName(name);
   };
@@ -243,34 +271,37 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
         subActions: [
           {
             label: 'Fiscal',
-            databstarget: 'Voting',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Fiscal'),
           },
           {
             label: 'Labor',
-            databstarget: 'Voting',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Labor')
           },
           {
             label: 'Taxation',
-            databstarget: 'Voting',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Taxation')
           },
           {
             label: 'Health',
-            databstarget: 'Voting',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Health')
           },
           {
             label: 'Education',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Education')
           },
           {
             label: 'Foreign',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Foreign')
           },
           {
             label: 'Immigration',
+            databstarget: 'Votingbill',
             onClick: () => openModalWithVoting('Immigration')
           }
         ]
@@ -309,9 +340,10 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
       }
     ],
     free: [
-      { label: 'Use Healthcare', databstarget: 'Using', onClick: () => openusingModal('Health') },
+      { label: 'Use Heathlcare', databstarget: 'Using', onClick: () => openusingModal('Health') },
       { label: 'Use Education', databstarget: 'Using', onClick: () => openusingModal('Education') },
       { label: 'Use Luxury', databstarget: 'Using', onClick: () => openusingModal('Luxury') },
+      { label: 'Swap workers', databstarget: 'SwapWorker' },
       { label: 'pay the loan', databstarget: 'loan' },
       { label: '发钱', databstarget: 'loan', onClick: () => WorkerClass.getInstance().addincome(100) },
     ]
@@ -363,22 +395,38 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     });
   };
   const handleVote = (option: string) => {
-    Board.getInstance().voting(
-      votingName,
-      option,
-      () => {
-        setBasicAction(true);
-      },
-      (error) => {
-        alert(error);
-      }
-    );
+    if (votingrapidly) {
+      Board.getInstance().Votingrapidly(
+        votingName,
+        option,
+        () => {
+          WorkerClass.getInstance().getinfo().goodsAndServices.Influence--;
+          setBasicAction();
+          setShowModal(true);
+        },
+        (error) => {
+          alert(error);
+        }
+      );
+    }
+    else {
+      Board.getInstance().votingabill(
+        votingName,
+        option,
+        () => {
+          setBasicAction();
+        },
+        (error) => {
+          alert(error);
+        }
+      );
+    }
   };
   const handleUsing = () => {
     WorkerClass.getInstance().using(
       Usingitem,
       () => {
-        setfreeAction(true);
+        setfreeAction();
       },
       (error) => {
         alert(error);
@@ -388,7 +436,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
   const handleloan = () => {
     WorkerClass.getInstance().payoffloan(
       () => {
-        setfreeAction(true);
+        setfreeAction();
+        return (<div data-bs-dismiss="modal" />)
       },
       (error) => {
         alert(error);
@@ -396,10 +445,24 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
     );
   };
   const handleNextRound = () => {
-    setfreeAction(false);
-    setBasicAction(false);
     onActionComplete();
   }
+  function handleCloseModal() {
+    throw new Error('Function not implemented.');
+  }
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    const numberValue = parseFloat(value);
+  };
+  const handleButtonClick = () => {
+    if (typeof inputValue === 'number') {
+      Board.getInstance().Voting2(inputValue);
+      console.log('Submitted value:', inputValue);
+    } else {
+      console.error('Invalid input value');
+    }
+    setShowModal(false);
+  };
   return (
     <div className="container">
       <div className="d-flex justify-content-center" id="menu">
@@ -411,25 +474,36 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
             </div></div>
         ))}</div>
       {usedBasicActions && <button onClick={handleNextRound}>Next Round</button>}
-      <div className="modal fade" id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div className="modal fade" id="Votingbill" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{votingName}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{votingName}'s 当前政策{Board.getInstance().getBoardInfo().Policy[votingName]}</div>
+            <div>{votingName}`s 当前政策{Board.getInstance().getinfo().Policy[votingName]}
+            </div>
             <div className="modal-body">
               <div className="d-flex justify-content-center" >
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('A')}>A</button>
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('B')}>B</button>
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('C')}>C</button>
-              </div>
+                <div>
+                  <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => setvotingrapidly(true)}
+                    disabled={!(!votingrapidly && WorkerClass.getInstance().getinfo().goodsAndServices.Influence > 0)}>Voting rapidly</button>
+                  <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => setvotingrapidly(false)}
+                    disabled={!votingrapidly}>Voting after Production</button>
+                </div>
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('A')} data-bs-dismiss="modal"
+                  disabled={usedBasicActions}>A</button>
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('B')} data-bs-dismiss="modal"
+                  disabled={usedBasicActions}>B</button>
+                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('C')} data-bs-dismiss="modal"
+                  disabled={usedBasicActions}>C</button></div>
+
+
+              <label data-bs-dismiss="modal" aria-label="Close" />
             </div>
             {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
             </div>
           </div>
         </div>
@@ -441,10 +515,15 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{Usingitem}有{WorkerClass.getInstance().getworkingclassInfo().goodsAndServices[Usingitem]}</div>
-            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
+            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
-              {Usingitem === 'Education' as keyof GoodsAndServices ? <button className="btn btn-primary" data-bs-target="#UsingEducation" data-bs-toggle="modal">usingeducation</button> : <button onClick={() => handleUsing()}>using</button>}
+              {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem] >= WorkerClass.getInstance().getinfo().population.population_level ?
+                Usingitem === 'Education' as keyof GoodsAndServices ?
+                  <button className="btn btn-primary" data-bs-target="#UsingEducation" data-bs-toggle="modal" disabled={usedfreeActions}>using</button> :
+                  <button className="btn btn-primary" onClick={() => handleUsing()} disabled={usedfreeActions} data-bs-dismiss="modal">using</button> :
+                <button className="btn btn-primary" onClick={() => handleUsing()} disabled={usedfreeActions}>not enough</button>
+              }
             </div>
             {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             <div className="modal-footer">
@@ -460,12 +539,12 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
               <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>s 当前{WorkerClass.getInstance().getworkingclassInfo().loan}</div>
+            <div>s 当前{WorkerClass.getInstance().getinfo().loan}</div>
             <div className="modal-body">
               {
-                WorkerClass.getInstance().getworkingclassInfo().loan !== 0 ?
-                  WorkerClass.getInstance().getworkingclassInfo().income >= 50 ?
-                    <button onClick={() => handleloan()}>A</button> :
+                WorkerClass.getInstance().getinfo().loan !== 0 ?
+                  WorkerClass.getInstance().getinfo().income >= 50 ?
+                    <button onClick={() => handleloan()} data-bs-dismiss="modal" >A</button> :
                     <div>no money</div>
                   :
                   <div>no loan</div>
@@ -484,22 +563,39 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">UsingEducation</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>当前有{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div>当前有{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
-              <ul>
-                {Board.getInstance().getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-                  <div key={index} style={{ margin: '50px' }}>
-                    {company.workingworkers.length > 0 && company.workingworkers.filter(worker => worker.skill === "unskill") && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
-                    {company.workingworkers && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
-                      <div key={index2}>{worker.skill === "unskill" && <button onClick={() => setusingworker(worker)} className="btn btn-primary" data-bs-target="#upgrade" data-bs-toggle="modal" >Train Worker</button>}</div>))}
-                  </div>))}</ul>
-              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <div className="d-flex">
+                <ul className="p-2 flex-fill">
+                  <div>state</div>
+                  {Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === "unskill").length > 0 && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === "unskill").length > 0 && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                        <div key={index2}>{worker.skill === "unskill" && <button onClick={() => setusingworker(worker)} className="btn btn-primary" data-bs-target="#upgrade" data-bs-toggle="modal" >Train Worker</button>}</div>))}
+                    </div>))}</ul>
+                <ul className="p-2 flex-fill">
+                  <div>CapitalistClass</div>
+                  {CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === "unskill").length > 0 && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === "unskill").length > 0 && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                        <div key={index2}>{worker.skill === "unskill" && <button onClick={() => setusingworker(worker)} className="btn btn-primary" data-bs-target="#upgrade" data-bs-toggle="modal" >Train Worker</button>}</div>))}
+                    </div>))}</ul>
+                <ul className="p-2 flex-fill">
+                  <div>unempolyment</div>
+                  {Board.getInstance().getinfo().unempolyment.map((worker: Worker, index: React.Key | null | undefined) => (
+                    <div key={index}>
+                      {worker.skill === "unskill" && <button onClick={() => setusingworker(worker)} className="btn btn-primary" data-bs-target="#upgrade" data-bs-toggle="modal" >Train Worker</button>}
+                    </div>))}
+                </ul>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
             </div>
           </div>
         </div>
@@ -508,14 +604,14 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">upgrade</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>当前有{WorkerClass.getInstance().getworkingclassInfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div>当前有{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Acriculture')}>Acriculture</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Agriculture')}>Agriculture</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury')}>Luxury</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathcare')}>Heathcare</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathlcare')}>Heathlcare</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education')}>Education</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media')}>Media</button>
               {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
@@ -526,21 +622,134 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete }) => {
           </div>
         </div>
       </div>
-    </div>
+      <div className="modal fade" id="SwapWorker" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">SwapWorker</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>当前有{Board.getInstance().getinfo().unempolyment.filter(worker => worker.skill === 'unskill').length}</div>
+            <div className="modal-body">
+              <div className="d-flex">
+                <ul className="p-2 flex-fill">
+                  <div>state</div>
+                  {Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker
+                        && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker
+                        && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                          <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
+                            () => { setfreeAction(); },
+                            (error) => {
+                              alert(error);
+                            })} className="btn btn-primary" data-bs-dismiss="modal">Swap Worker{worker.skill}</button>}</div>))}
+                    </div>))}</ul>
+                <ul className="p-2 flex-fill">
+                  <div>CapitalistClass</div>
+                  {CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker
+                        && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker
+                        && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                          <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
+                            () => { setfreeAction(); },
+                            (error) => {
+                              alert(error);
+                            })} className="btn btn-primary" data-bs-dismiss="modal">Swap Worker{worker.skill}</button>}</div>))}
+                    </div>))}</ul>
+              </div>
+              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="modal fade" id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">SwapWorker</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>当前有{Board.getInstance().getinfo().unempolyment.filter(worker => worker.skill === 'unskill').length}</div>
+            <div className="modal-body">
+              <div className="d-flex">
+                <ul className="p-2 flex-fill">
+                  <div>state</div>
+                  {Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length > company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length > company.skilledworker && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                        <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
+                          () => { setfreeAction(); },
+                          (error) => {
+                            alert(error);
+                          })} className="btn btn-primary">Swap Worker</button>}</div>))}
+                    </div>))}</ul>
+                <ul className="p-2 flex-fill">
+                  <div>CapitalistClass</div>
+                  {CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+                    <div key={index} style={{ margin: '50px' }}>
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
+                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
+                        <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
+                          () => { setfreeAction(); },
+                          (error) => {
+                            alert(error);
+                          })} className="btn btn-primary">Swap Worker</button>}</div>))}
+                    </div>))}</ul>
+              </div>
+              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showVotingModal && (
+        <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">voting + {votingName}</h5>
+              </div>
+              <div className="modal-body">
+                <div>the worker has {Board.getInstance().getinfo().Votingresult.Workerclass}</div>
+                <div>the Capitalistclass has {Board.getInstance().getinfo().Votingresult.Capitalistclass}</div>
+                <div className="input-group mb-3">
+                  <span className="input-group-text" id="basic-addon1">the influence</span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    aria-label="Amount (to the nearest dollar)"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <button onClick={handleButtonClick} className="btn btn-primary">Submit</button>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div >
   );
-
-
-
-
-
-
-
-
 };
 
 function DataTable(data: { workerclass: WorkerClass; capitalistclass: CapitalistClass; board: Board; }) {
   return (
-    <><h3 className="container text-center">workercalss</h3>
+    <>
+
+      <h3 className="container text-center">workercalss</h3>
       <table className="table table-striped table-bordered" id="wokerclass information">
         <thead>
           <tr className="container text-center">
@@ -555,7 +764,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <th>Influence</th>
             <th>Agriculture-Trade unions</th>
             <th >Luxury-Trade unions</th>
-            <th >Healthcare-Trade unions</th>
+            <th >Heathlcare-Trade unions</th>
             <th >Education-Trade unions</th>
             <th >Media-Trade unions</th>
             <th >loan</th>
@@ -563,21 +772,21 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
         </thead>
         <tbody>
           <tr className="container text-center">
-            <td className="col">{data.workerclass.getworkingclassInfo().population.worker.length}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().population.population_level}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().income}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().score}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().goodsAndServices.Food}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().goodsAndServices.Luxury}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().goodsAndServices.Education}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().goodsAndServices.Health}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().goodsAndServices.Influence}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().tradeUnions.Acriculture ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().tradeUnions.Luxury ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().tradeUnions.Heathcare ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().tradeUnions.Education ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().tradeUnions.Media ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getworkingclassInfo().loan}</td>
+            <td className="col">{data.workerclass.getinfo().population.worker.length}</td>
+            <td className="col">{data.workerclass.getinfo().population.population_level}</td>
+            <td className="col">{data.workerclass.getinfo().income}</td>
+            <td className="col">{data.workerclass.getinfo().score}</td>
+            <td className="col">{data.workerclass.getinfo().goodsAndServices.Food}</td>
+            <td className="col">{data.workerclass.getinfo().goodsAndServices.Luxury}</td>
+            <td className="col">{data.workerclass.getinfo().goodsAndServices.Education}</td>
+            <td className="col">{data.workerclass.getinfo().goodsAndServices.Health}</td>
+            <td className="col">{data.workerclass.getinfo().goodsAndServices.Influence}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Agriculture ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Luxury ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Heathlcare ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Education ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Media ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().loan}</td>
           </tr>
         </tbody>
       </table>
@@ -595,12 +804,12 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
         </thead>
         <tbody>
           <tr>
-            <td rowSpan={3}><Image src={Board.getInstance().getBoardInfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
-            <td>{data.board.getBoardInfo().StateTreasury}</td>
-            <td>{data.board.getBoardInfo().PublicServices.Health}</td>
-            <td>{data.board.getBoardInfo().PublicServices.Education}</td>
-            <td>{data.board.getBoardInfo().PublicServices.Influence}</td>
-            <td>{data.board.getBoardInfo().loan}</td>
+            <td rowSpan={3}><Image src={Board.getInstance().getinfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
+            <td>{data.board.getinfo().StateTreasury}</td>
+            <td>{data.board.getinfo().PublicServices.Health}</td>
+            <td>{data.board.getinfo().PublicServices.Education}</td>
+            <td>{data.board.getinfo().PublicServices.Influence}</td>
+            <td>{data.board.getinfo().loan}</td>
           </tr>
           <tr>
             <th scope="col">Fiscal</th>
@@ -612,23 +821,23 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <th scope="col">Immigration</th>
           </tr>
           <tr>
-            <td>{data.board.getBoardInfo().Policy.Fiscal}</td>
-            <td>{data.board.getBoardInfo().Policy.Labor}</td>
-            <td>{data.board.getBoardInfo().Policy.Taxation}</td>
-            <td>{data.board.getBoardInfo().Policy.Health}</td>
-            <td>{data.board.getBoardInfo().Policy.Education}</td>
-            <td>{data.board.getBoardInfo().Policy.Foreign}</td>
-            <td>{data.board.getBoardInfo().Policy.Immigration}</td>
+            <td>{data.board.getinfo().Policy.Fiscal}</td>
+            <td>{data.board.getinfo().Policy.Labor}</td>
+            <td>{data.board.getinfo().Policy.Taxation}</td>
+            <td>{data.board.getinfo().Policy.Health}</td>
+            <td>{data.board.getinfo().Policy.Education}</td>
+            <td>{data.board.getinfo().Policy.Foreign}</td>
+            <td>{data.board.getinfo().Policy.Immigration}</td>
           </tr>
           <tr>
             <th scope="col">bill</th>
-            <td>{data.board.getBoardInfo().PolicyVoting.Fiscal}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Labor}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Taxation}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Health}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Education}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Foreign}</td>
-            <td>{data.board.getBoardInfo().PolicyVoting.Immigration}</td>
+            <td>{data.board.getinfo().PolicyVoting.Fiscal}</td>
+            <td>{data.board.getinfo().PolicyVoting.Labor}</td>
+            <td>{data.board.getinfo().PolicyVoting.Taxation}</td>
+            <td>{data.board.getinfo().PolicyVoting.Health}</td>
+            <td>{data.board.getinfo().PolicyVoting.Education}</td>
+            <td>{data.board.getinfo().PolicyVoting.Foreign}</td>
+            <td>{data.board.getinfo().PolicyVoting.Immigration}</td>
           </tr>
         </tbody>
       </table>
@@ -650,15 +859,15 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
           </thead>
           <tbody>
             <tr>
-              <td>{data.capitalistclass.getCapitalistInfo().Score}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().Revenue}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().Capitalist}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().Influence}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Food}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Luxury}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Health}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().goodsAndServices.Education}</td>
-              <td>{data.capitalistclass.getCapitalistInfo().loan}</td>
+              <td>{data.capitalistclass.getinfo().Score}</td>
+              <td>{data.capitalistclass.getinfo().Revenue}</td>
+              <td>{data.capitalistclass.getinfo().Capitalist}</td>
+              <td>{data.capitalistclass.getinfo().Influence}</td>
+              <td>{data.capitalistclass.getinfo().goodsAndServices.Food}</td>
+              <td>{data.capitalistclass.getinfo().goodsAndServices.Luxury}</td>
+              <td>{data.capitalistclass.getinfo().goodsAndServices.Health}</td>
+              <td>{data.capitalistclass.getinfo().goodsAndServices.Education}</td>
+              <td>{data.capitalistclass.getinfo().loan}</td>
             </tr>
           </tbody>
         </table>
@@ -666,48 +875,125 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
       <div className="d-flex">
         <div className="p-2 flex-fill">
           <h3 className="container text-center">State Companies</h3>
-          <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
-            {data.board.getBoardInfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-              <div key={index} style={{ margin: '50px' }}>
-                <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
-                <div>
-                  {working(company) ?
-                    <div>working</div> :
-                    <div>noworking</div>}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+            }}
+          >
+            {data.board.getinfo().companys.map((company, index) => (
+              <div
+                key={index}
+                style={{
+                  margin: '20px',
+                  flex: '1 1 calc(25% - 40px)',
+                  minHeight: '270px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  border: '1px solid #ccc',
+                  padding: '10px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ marginBottom: '10px' }}>
+                  <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  {working(company) ? (
+                    <div>
+                      Working
+                      {company.workingworkers.map((worker, workerIndex) => (
+                        <div key={workerIndex}>
+                          This worker is a {worker.skill}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>No working {company.workingworkers.map((worker, workerIndex) => (
+                      <div key={workerIndex}>
+                        This worker is a {worker.skill}
+                      </div>
+                    ))}</div>
+                  )}
                 </div>
               </div>
-            ))}</div>
+            ))}
+          </div>
+        </div>
+        <div>
+          填充物
         </div>
         <div className="p-2 flex-fill">
-          <h3 className="container text-center">capitalistclass Companies</h3>
-          <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'start' }}>
-            {data.capitalistclass.getCapitalistInfo().Company.map((company: Company, index: React.Key | null | undefined) => (
-              <div key={index} style={{ margin: '50px' }}>
-                <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
-                <div>
-                  {working(company) ?
-                    <div>working</div> :
-                    <div>noworking</div>}
+          <h3 className="container text-center">Capitalist Class Companies</h3>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+            }}
+          >
+            {data.capitalistclass.getinfo().companys.map((company, index) => (
+              <div
+                key={index}
+                style={{
+                  margin: '20px',
+                  flex: '1 1 calc(25% - 40px)',
+                  minHeight: '270px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  border: '1px solid #ccc',
+                  padding: '10px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ marginBottom: '10px' }}>
+                  <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  {working(company) ? (
+                    <div>
+                      Working
+                      {company.workingworkers.map((worker, workerIndex) => (
+                        <div key={workerIndex}>
+                          This worker is a {worker.skill}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>No working
+                      {company.workingworkers.map((worker, workerIndex) => (
+                        <div key={workerIndex}>
+                          This worker is a {worker.skill}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}</div></div>
+            ))}
+          </div>
+        </div>
+
       </div></>
   );
 }
 
 function working(company: Company): boolean {
-  const workers = WorkerClass.getInstance().getworkingclassInfo().population.worker;
+  const workers = company.workingworkers;
   let Workers = 0, skilledWorker = 0;
-
   for (let i = 0; i < workers.length; i++) {
-    const workerLocation = workers[i].location;
-    if (workerLocation && workerLocation.name === company.name) {
-      Workers++;
-      if (workers[i].skill !== 'unskill') {
-        skilledWorker++;
-      }
+    if (workers[i].skill === company.industry) {
+      skilledWorker++;
     }
   }
-  return Workers === company.requiredWorkers && skilledWorker >= company.skilledworker;
+  return company.workingworkers.length === company.requiredWorkers && skilledWorker >= company.skilledworker;
 }
-

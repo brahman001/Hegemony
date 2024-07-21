@@ -1,18 +1,18 @@
 import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
-import { CapitalistCompanys } from "@/lib/Capitalist class"
-import { StateCompanies } from './board';
+import { CapitalistClass } from './Capitalist class';
+import { Board } from './board';
 import { parse, stringify } from 'flatted';
-type skillkind = 'Acriculture' | 'Luxury' | 'Heathcare' | 'Education' | 'Media' | 'unskill';
+type skillkind = 'Agriculture' | 'Luxury' | 'Heathlcare' | 'Education' | 'Media' | 'unskill';
 export interface Worker {
     skill: skillkind;
     location: Company | null;
 }
 interface Population {
     Natureofposition: {
-        Acriculture: number;
+        Agriculture: number;
         Luxury: number;
-        Heathcare: number;
+        Heathlcare: number;
         Education: number;
         Media: number;
     };
@@ -21,9 +21,9 @@ interface Population {
 }
 
 interface TradeUnions {
-    Acriculture: boolean;
+    Agriculture: boolean;
     Luxury: boolean;
-    Heathcare: boolean;
+    Heathlcare: boolean;
     Education: boolean;
     Media: boolean;
 }
@@ -53,9 +53,9 @@ export class WorkerClass extends EventEmitter {
         this.score = 0;
         this.population = {
             Natureofposition: {
-                Acriculture: 0,
+                Agriculture: 0,
                 Luxury: 0,
-                Heathcare: 0,
+                Heathlcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -63,9 +63,9 @@ export class WorkerClass extends EventEmitter {
             population_level: 3,
         };
         this.tradeUnions = {
-            Acriculture: false,
+            Agriculture: false,
             Luxury: false,
-            Heathcare: false,
+            Heathlcare: false,
             Education: false,
             Media: false,
         };
@@ -93,20 +93,17 @@ export class WorkerClass extends EventEmitter {
         }
         return WorkerClass.instance;
     }
-
-    // Method to restore properties from parsed data
     setWorkerClass(data: any): void {
         Object.assign(this, data);
     }
-
     Initialization2P() {
         this.loan = 0;
         this.score = 0;
         this.population = {
             Natureofposition: {
-                Acriculture: 0,
+                Agriculture: 0,
                 Luxury: 0,
-                Heathcare: 0,
+                Heathlcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -114,9 +111,9 @@ export class WorkerClass extends EventEmitter {
             population_level: 3,
         };
         this.tradeUnions = {
-            Acriculture: false,
+            Agriculture: false,
             Luxury: false,
-            Heathcare: false,
+            Heathlcare: false,
             Education: false,
             Media: false,
         };
@@ -124,20 +121,20 @@ export class WorkerClass extends EventEmitter {
         this.prosperity = 0;
         this.cooperativefarm = 0;
         this.goodsAndServices = {
-            Food: 0,
-            Luxury: 0,
-            Health: 6,
-            Education: 0,
+            Food: 6,
+            Luxury: 6,
+            Health: 10,
+            Education: 6,
             Influence: 1,
         };
-        this.addWorker("unskill", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
-        this.addWorker("Acriculture", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
-        this.addWorker("unskill", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
-        this.addWorker("Luxury", CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
-        this.addWorker("unskill", StateCompanies.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
-        this.addWorker("Education", StateCompanies.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
-        this.addWorker("unskill", StateCompanies.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
-        this.addWorker("Heathcare", StateCompanies.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
+        this.addWorker("unskill", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
+        this.addWorker("Agriculture", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
+        this.addWorker("unskill", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
+        this.addWorker("Luxury", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FACTORY_basic") as CapitalistCompany);
+        this.addWorker("unskill", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
+        this.addWorker("Education", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
+        this.addWorker("unskill", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
+        this.addWorker("Heathlcare", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
         this.addWorker("unskill", null);
         this.emit('update');
     }
@@ -168,80 +165,86 @@ export class WorkerClass extends EventEmitter {
         } else {
             this.population.population_level = 4 + Math.floor((population - 12) / 3);
         }
-        this.population.worker.forEach(worker => {
-            if (worker.location) {
-                switch (worker.location.industry) {
-                    case 'Agriculture':
-                        this.population.Natureofposition.Acriculture++;
-                        break;
-                    case 'Luxury':
-                        this.population.Natureofposition.Luxury++;
-                        break;
-                    case 'Healthcare':
-                        this.population.Natureofposition.Heathcare++;
-                        break;
-                    case 'Education':
-                        this.population.Natureofposition.Education++;
-                        break;
-                    case 'Media':
-                        this.population.Natureofposition.Media++;
-                        break;
-                }
-            }
-        });
     }
     addWorker(skill: skillkind, location: Company | null) {
-        const worker = { skill,location};
+        const worker = { skill, location };
         this.population.worker.push(worker);
         this.calculatePopulationLevel();
-        if (location != null) {
+        if (location !== null) {
             location.workingworkers.push(worker);
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
         }
         else {
+            Board.getInstance().getinfo().unempolyment.push(worker)
         }
         this.emit('update');
     }
     upgrade(worker: Worker, aim: skillkind) {
         if (worker.skill === 'unskill') {
             worker.skill = aim;
-            return;
+            this.emit('update');
         }
     }
     using(item: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
+        const populationLevel = this.population.population_level;
+        const goods = this.goodsAndServices;
+        let errorMessage: string | null = null;
+
         switch (item) {
             case "Food":
-                this.goodsAndServices.Food -= this.population.population_level;
-                break;
-            case 'Education':
-                if (this.goodsAndServices.Health - this.population.population_level >= 0) {
-                    this.goodsAndServices.Health -= this.population.population_level;
-                    this.addWorker('unskill', null);
+                if (goods.Food >= populationLevel) {
+                    goods.Food -= populationLevel;
+                    this.emit('update');
+                } else {
+                    errorMessage = `没有足够的 Food`;
                 }
-
                 break;
+
+            case 'Education':
+                if (goods.Health >= populationLevel) {
+                    goods.Health -= populationLevel;
+                    this.addWorker('unskill', null);
+                    onSuccess();
+                    this.emit('update');
+                } else {
+                    errorMessage = `没有足够的 Health`;
+                }
+                break;
+
             case 'Health':
-                if (this.goodsAndServices.Health - this.population.population_level >= 0) {
-                    this.goodsAndServices.Health -= this.population.population_level;
+                if (goods.Health >= populationLevel) {
+                    goods.Health -= populationLevel;
                     this.addWorker('unskill', null);
                     this.score += 2;
                     this.setProsperity(this.prosperity + 1);
-                    console.log("添加测试")
-                    this.emit('update');
                     onSuccess();
-                }
-                return this.emit('update');
-            case "Luxury":
-                if (this.goodsAndServices.Luxury - this.population.population_level >= 0) {
-                    this.goodsAndServices.Luxury -= this.population.population_level;
-                    this.setProsperity(this.prosperity + 1);
+                    this.emit('update');
+                } else {
+                    errorMessage = `没有足够的 Health`;
                 }
                 break;
+
+            case "Luxury":
+                if (goods.Luxury >= populationLevel) {
+                    goods.Luxury -= populationLevel;
+                    this.setProsperity(this.prosperity + 1);
+                    onSuccess();
+                    this.emit('update');
+                } else {
+                    errorMessage = `没有足够的 Luxury`;
+                }
+                break;
+
+            default:
+                errorMessage = `未知的资源: ${item}`;
+                break;
         }
-        const errorMessage = `没有足够: ${item}`;
-        this.emit('update', errorMessage);
-        onError(errorMessage);
+
+        if (errorMessage) {
+            this.emit('update', errorMessage);
+            onError(errorMessage);
+        }
     }
     payoffloan(onSuccess: () => void, onError: (message: string) => void) {
         this.income -= 50;
@@ -251,13 +254,12 @@ export class WorkerClass extends EventEmitter {
     }
     setScore(newScore: number): void {
         this.score += newScore;
-        this.emit('update');
     }
     addincome(number: number) {
         this.income += number;
         this.emit('update');
     }
-    getworkingclassInfo() {
+    getinfo() {
         return {
             population: this.population,
             goodsAndServices: this.goodsAndServices,
