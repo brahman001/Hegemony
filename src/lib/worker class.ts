@@ -125,7 +125,7 @@ export class WorkerClass extends EventEmitter {
             Luxury: 6,
             Health: 10,
             Education: 6,
-            Influence: 1,
+            Influence: 10,
         };
         this.addWorker("unskill", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
         this.addWorker("Agriculture", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
@@ -168,15 +168,17 @@ export class WorkerClass extends EventEmitter {
     }
     addWorker(skill: skillkind, location: Company | null) {
         const worker = { skill, location };
-        this.population.worker.push(worker);
-        this.calculatePopulationLevel();
-        if (location !== null) {
+        if (location !== null&&location.workingworkers.length<location.requiredWorkers) {
             location.workingworkers.push(worker);
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
+            this.population.worker.push(worker);
+            this.calculatePopulationLevel();
         }
         else {
-            Board.getInstance().getinfo().unempolyment.push(worker)
+            Board.getInstance().getinfo().unempolyment.push(worker);
+            this.population.worker.push(worker);
+        this.calculatePopulationLevel();
         }
         this.emit('update');
     }
@@ -254,6 +256,7 @@ export class WorkerClass extends EventEmitter {
     }
     setScore(newScore: number): void {
         this.score += newScore;
+        this.emit('update');
     }
     addincome(number: number) {
         this.income += number;
@@ -269,5 +272,10 @@ export class WorkerClass extends EventEmitter {
             loan: this.loan,
         };
     }
+    Buying(inputValue: number,Usingitem:keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
+        this.goodsAndServices[Usingitem]+=inputValue;
+        onSuccess();
+        this.emit("update");
+      }
 }
 

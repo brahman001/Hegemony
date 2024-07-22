@@ -1,7 +1,7 @@
-import { CapitalistCompany,CapitalistCompanys } from './company'
+import { CapitalistCompany, CapitalistCompanys } from './company'
 import { EventEmitter } from 'events';
 import { parse, stringify } from 'flatted';
-interface CapitalistGoodsAndServices {
+export interface CapitalistGoodsAndServices {
     Food: number;
     Luxury: number;
     Health: number;
@@ -17,6 +17,7 @@ export class CapitalistClass extends EventEmitter {
     private Influence: number;
     private score: number;
     private loan: number;
+    private goodsPrices: { [key in keyof CapitalistGoodsAndServices]: number };
 
     private constructor() {
         super();
@@ -28,6 +29,12 @@ export class CapitalistClass extends EventEmitter {
             Luxury: 0,
             Health: 0,
             Education: 0,
+        };
+        this.goodsPrices = {
+            Food: 12,
+            Luxury: 8,
+            Health: 8,
+            Education: 8,
         };
         this.Influence = 1;
         this.score = 0;
@@ -79,6 +86,7 @@ export class CapitalistClass extends EventEmitter {
     }
     getinfo() {
         return {
+            goodsPrices:this.goodsPrices,
             Score: this.score,
             companys: this.Company,
             Revenue: this.Revenue,
@@ -105,6 +113,12 @@ export class CapitalistClass extends EventEmitter {
         this.Influence = 1;
         this.score = 0;
         this.loan = 0;
+    }
+    AdjustPrices(item: keyof CapitalistGoodsAndServices, price: number) {
+        if (price >= 0) {
+            this.goodsPrices[item] = price;
+            this.emit('priceChange', { item, price });
+        }
     }
 }
 

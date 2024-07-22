@@ -1,4 +1,4 @@
-import { WorkerClass, Worker } from "./worker class";
+import { WorkerClass, Worker, GoodsAndServices } from "./worker class";
 import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
 import { Company } from "./company";
@@ -13,7 +13,12 @@ export interface Policy {
     Foreign: string;
     Immigration: string;
 }
-export interface PublicServices {
+interface PolicyMap {
+    A: number;
+    B: number;
+    C: number;
+}
+export interface StategoodsAndServices {
     Health: number;
     Education: number;
     Influence: number;
@@ -44,13 +49,12 @@ interface Votingbag {
     Capitalistclass: number;
 }
 export class Board extends EventEmitter {
-    private player: number;
     private Votingbag: Votingbag;
     private Votingresult: Votingbag;
     private static instance: Board;
     private Policy: Policy;
     private StateTreasury: number;
-    private PublicServices: PublicServices;
+    private goodsAndServices: StategoodsAndServices;
     private BusinessDeal: BusinessDeal;
     private Export: Export[];
     private Import: Import[];
@@ -73,7 +77,6 @@ export class Board extends EventEmitter {
             Capitalistclass: 0,
         };
         this.unempolyment = [];
-        this.player = 2;
         this.loan = 0;
         this.Policy = {
             Fiscal: 'C',
@@ -90,7 +93,7 @@ export class Board extends EventEmitter {
                 { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
             ]
         this.StateTreasury = 120,
-            this.PublicServices = {
+            this.goodsAndServices = {
                 Health: 6,
                 Education: 6,
                 Influence: 4,
@@ -130,7 +133,7 @@ export class Board extends EventEmitter {
         this.Policy = data.Policy;
         this.Export = data.Export;
         this.StateTreasury = data.StateTreasury;
-        this.PublicServices = data.PublicServices;
+        this.goodsAndServices = data.goodsAndServices;
         this.BusinessDeal = data.BusinessDeal;
         this.PolicyVoting = data.PolicyVoting;
         this.StateCompany = data.StateCompany;
@@ -161,7 +164,7 @@ export class Board extends EventEmitter {
                 { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
             ]
         this.StateTreasury = 120,
-            this.PublicServices = {
+            this.goodsAndServices = {
                 Health: 6,
                 Education: 6,
                 Influence: 4,
@@ -176,7 +179,7 @@ export class Board extends EventEmitter {
             Foreign: '',
             Immigration: '',
         };
-
+        this.StateCompany = [];
         this.setcompany2p();
     };
     setPolicy(policyType: keyof Policy, policyValue: string): void {
@@ -192,21 +195,21 @@ export class Board extends EventEmitter {
     addPublicService(industry: String, number: number) {
         switch (industry) {
             case 'Heathlcare':
-                this.PublicServices.Health += number;
+                this.goodsAndServices.Health += number;
                 break;
             case 'Education':
-                this.PublicServices.Education += number;
+                this.goodsAndServices.Education += number;
                 break;
             case 'Media':
-                this.PublicServices.Influence += number;
+                this.goodsAndServices.Influence += number;
                 break;
             default:
                 throw new Error(`Industry type ${industry} does not exist`);
         }
     }
-    updatePublicService(serviceType: keyof PublicServices, amount: number): void {
-        if (this.PublicServices.hasOwnProperty(serviceType)) {
-            this.PublicServices[serviceType]! += amount;
+    updatePublicService(serviceType: keyof StategoodsAndServices, amount: number): void {
+        if (this.goodsAndServices.hasOwnProperty(serviceType)) {
+            this.goodsAndServices[serviceType]! += amount;
         } else {
             throw new Error(`Public service type ${serviceType} does not exist`);
         }
@@ -226,7 +229,7 @@ export class Board extends EventEmitter {
             Policy: this.Policy,
             PolicyVoting: this.PolicyVoting,
             StateTreasury: this.StateTreasury,
-            PublicServices: this.PublicServices,
+            goodsAndServices: this.goodsAndServices,
             BusinessDeal: this.BusinessDeal,
             Export: this.Export,
             Import: this.Import,
@@ -240,15 +243,28 @@ export class Board extends EventEmitter {
         this.emit('update');
     }
     setcompany2p() {
-        this.StateCompany = [];
+        let targetCompanies = [];
         switch (this.Policy.Fiscal) {
-            case 'A':
-                this.StateCompany = [StateCompanies[3], StateCompanies[7], StateCompanies[11]];
+            case 'C':
+                targetCompanies = [StateCompanies[1], StateCompanies[5], StateCompanies[9]];
+                break;
             case 'B':
-                this.StateCompany = [StateCompanies[2], StateCompanies[6], StateCompanies[10]];
+                targetCompanies = [StateCompanies[2], StateCompanies[6], StateCompanies[10], StateCompanies[1], StateCompanies[5], StateCompanies[9]];
+                break;
             default:
-                this.StateCompany = [StateCompanies[1], StateCompanies[5], StateCompanies[9]];
+                targetCompanies = [StateCompanies[1], StateCompanies[5], StateCompanies[9], StateCompanies[2],
+                StateCompanies[6], StateCompanies[10], StateCompanies[3], StateCompanies[7], StateCompanies[11]];
         }
+
+
+        this.StateCompany = this.StateCompany.filter(company => targetCompanies.includes(company));
+
+
+        targetCompanies.forEach(company => {
+            if (!this.StateCompany.includes(company)) {
+                this.StateCompany.push(company);
+            }
+        });
         this.emit('update');
     }
     setcompany4p() {
@@ -360,12 +376,41 @@ export class Board extends EventEmitter {
             }
         }
     }
-
-    public Voting2(inputValue: number) {
+    Voting2(inputValue: number) {
         if ((inputValue + this.Votingresult.Workerclass) >= this.Votingresult.Capitalistclass) {
             this.Policy[this.policyVotingone] = this.PolicyVoting[this.policyVotingone];
             this.PolicyVoting[this.policyVotingone] = '';
             this.Votingbag.Capitalistclass += this.Votingresult.Capitalistclass;
+            switch (this.policyVotingone) {
+                case "Fiscal":
+                    Board.getInstance().setcompany2p();
+                    break;
+                case "Labor":
+                    const mapping: PolicyMap = {
+                        'A': 3,
+                        'B': 2,
+                        'C': 1
+                    };
+                    for (let i = 0; i < Board.getInstance().getinfo().companys.length; i++) {
+                        const policy = this.Policy[this.policyVotingone];
+                        if (mapping[policy as keyof PolicyMap] < Board.getInstance().getinfo().companys[i].wages.level) {
+                            Board.getInstance().getinfo().companys[i].wages.level = mapping[policy as keyof PolicyMap];
+                        }
+                    }
+                    for (let i = 0; i < CapitalistClass.getInstance().getinfo().companys.length; i++) {
+                        const policy = this.Policy[this.policyVotingone];
+                        if (mapping[policy as keyof PolicyMap] < Board.getInstance().getinfo().companys[i].wages.level) {
+                            Board.getInstance().getinfo().companys[i].wages.level = mapping[policy as keyof PolicyMap];
+                        }
+                    }
+                    break;
+                case "Taxation":
+                case "Health":
+                case "Education":
+                case "Foreign":
+                case "Immigration":
+            }
+
             WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 3);
         } else {
             this.Votingbag.Workerclass += this.Votingresult.Workerclass;
@@ -376,7 +421,32 @@ export class Board extends EventEmitter {
         this.Votingresult.Workerclass = 0;
         this.emit("updata");
     }
+    goodsPrices(item: keyof StategoodsAndServices): number {
+        if (item === 'Health') {
+            if (this.Policy.Health === 'A') {
+                return 0;
+            } else if (this.Policy.Health === 'B') {
+                return 5;
+            } else {
+                return 10;
+            }
+        }
+        if (item === 'Education') {
+            if (this.Policy.Education === 'A') {
+                return 0;
+            } else if (this.Policy.Education === 'B') {
+                return 5;
+            } else {
+                return 10;
+            }
+        }
+        if (item === 'Influence') {
+            return 10;
+        }
+        return 10;
+    }
 }
+
 
 const BusinessDealcards: BusinessDeal[] = [
     { item: "Food", amount: 6, price: 40, tax: { "A": 12, "B": 6, "C": 0 }, imageUrl: "/6food.jpg" },

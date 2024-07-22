@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import React, { useState, useEffect, ReactElement } from 'react';
 import { WorkerClass, GoodsAndServices, Worker } from '../../lib/worker class';
-import { CapitalistClass } from '@/lib/Capitalist class';
-import { Board, Policy } from '@/lib/board';
+import { CapitalistClass, CapitalistGoodsAndServices } from '@/lib/Capitalist class';
+import { Board, Policy, StategoodsAndServices } from '@/lib/board';
 import Image from 'next/image'
 import { CapitalistCompany, Company } from '@/lib/company';
 import { parse, stringify } from 'flatted';
@@ -158,8 +158,7 @@ export default function GameRun() {
   const handleNextRound = () => {
     if (gameState.phase === 'Production') {
       if (gameState.currentTurn <= gameState.maxTurns) {
-        //Board.getInstance().Voting();
-
+        Production();
         setGameState(prev => ({
           ...prev,
           currentTurn: prev.currentTurn + 1,
@@ -176,6 +175,7 @@ export default function GameRun() {
     }
   };
   const handleInitialization = () => {
+
     const board = Board.getInstance();
     board.Initialization2p();
     const capitalistClass = CapitalistClass.getInstance();
@@ -209,6 +209,11 @@ export default function GameRun() {
       capitalistclass: CapitalistClass.getInstance(),
       board: Board.getInstance(),
     });
+  }
+  const Production = () => {
+    for (let i = 0; i < Board.getInstance().getinfo().companys.length; i++) {
+
+    }
   }
 
   return (<>
@@ -251,13 +256,14 @@ export default function GameRun() {
   </>);
 }
 const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasicActions, usedfreeActions, setBasicAction, setfreeAction }) => {
+
   const [activePath, setActivePath] = useState<number[]>([]);
   const [votingName, setVotingName] = useState<keyof Policy>('Fiscal');
   const [Usingitem, setUsingitem] = useState<keyof GoodsAndServices>('Health');
   const [usingworker, setusingworker] = useState<Worker>();
   const [votingrapidly, setvotingrapidly] = useState(false);
-  const [showVotingModal, setShowModal] = useState(false);
-  const [inputValue, setInputValue] = useState<number>(0);
+  const [inputValue, setInputValue] = useState<number | string>('');
+  const [submitcondition, setsubmitcondition] = useState(false);
   const openModalWithVoting = (name: keyof Policy) => {
     setVotingName(name);
   };
@@ -307,35 +313,32 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
         ]
       },
       {
-        label: 'working', subActions: [
+        label: 'Buying', subActions: [
           {
-            label: 'Fiscal',
-            onClick: () => openModalWithVoting('Fiscal'),
-          },
-          {
-            label: 'Labor',
-            onClick: () => openModalWithVoting('Labor')
-          },
-          {
-            label: 'Taxation',
-            onClick: () => openModalWithVoting('Taxation')
-          },
-          {
-            label: 'Health',
-            onClick: () => openModalWithVoting('Health')
+            label: 'Food',
+            databstarget: 'Buying',
+            onClick: () => openusingModal('Food'),
           },
           {
             label: 'Education',
-            onClick: () => openModalWithVoting('Education')
+            databstarget: 'Buying',
+            onClick: () => openusingModal('Education'),
           },
           {
-            label: 'Foreign',
-            onClick: () => openModalWithVoting('Foreign')
+            label: 'Health',
+            databstarget: 'Buying',
+            onClick: () => openusingModal('Health'),
           },
           {
-            label: 'Immigration',
-            onClick: () => openModalWithVoting('Immigration')
-          }
+            label: 'Luxury',
+            databstarget: 'Buying',
+            onClick: () => openusingModal('Luxury'),
+          },
+          {
+            label: 'Influence',
+            databstarget: 'Buying',
+            onClick: () => openusingModal('Influence'),
+          },
         ]
       }
     ],
@@ -394,6 +397,54 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
       }
     });
   };
+  const renderBuyingOptions = (item: keyof GoodsAndServices) => {
+    const sources = {
+      'Food': [
+        { source: 'CapitalistClass', getInstance: () => CapitalistClass.getInstance().getinfo().goodsAndServices.Food },
+        { source: 'State', getInstance: () => null }
+      ],
+      'Luxury': [
+        { source: 'CapitalistClass', getInstance: () => CapitalistClass.getInstance().getinfo().goodsAndServices.Luxury },
+        { source: 'State', getInstance: () => null }
+      ],
+      'Health': [
+        { source: 'CapitalistClass', getInstance: () => CapitalistClass.getInstance().getinfo().goodsAndServices.Health },
+        { source: 'State', getInstance: () => Board.getInstance().getinfo().goodsAndServices.Health },
+      ],
+      'Education': [
+        { source: 'CapitalistClass', getInstance: () => CapitalistClass.getInstance().getinfo().goodsAndServices.Education },
+        { source: 'State', getInstance: () => Board.getInstance().getinfo().goodsAndServices.Education },
+      ],
+      'Influence': [
+        { source: 'State', getInstance: () => Board.getInstance().getinfo().goodsAndServices.Influence },
+      ]
+    };
+
+    return sources[item].map(({ source, getInstance }) => (
+      <div key={source}>
+        <div>
+          {`from ${source}`}
+          {getInstance && getInstance()}
+          <input
+            type="text"
+            className="form-control"
+            aria-label="Input number"
+            value={inputValue}
+            onChange={(event) => handleInputChange(event, source)}
+          />
+          <button
+            onClick={(event) => handleBuyingSubmit(event, source)}
+            className="btn btn-primary"
+            type="button"
+            data-bs-dismiss="modal"
+            disabled={source === 'CapitalistClass' && submitcondition}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    ));
+  }
   const handleVote = (option: string) => {
     if (votingrapidly) {
       Board.getInstance().Votingrapidly(
@@ -402,7 +453,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
         () => {
           WorkerClass.getInstance().getinfo().goodsAndServices.Influence--;
           setBasicAction();
-          setShowModal(true);
         },
         (error) => {
           alert(error);
@@ -447,22 +497,76 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
   const handleNextRound = () => {
     onActionComplete();
   }
-  function handleCloseModal() {
-    throw new Error('Function not implemented.');
-  }
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, key: String) => {
     const value = event.target.value;
     const numberValue = parseFloat(value);
+    let isValid = true;
+  
+    const workerInfo = WorkerClass.getInstance().getinfo();
+    const capitalistInfo = CapitalistClass.getInstance().getinfo();
+    const boardInfo = Board.getInstance().getinfo();
+  
+    if (key === 'Influence') {
+      isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= workerInfo.goodsAndServices.Influence;
+    } else if (key === 'CapitalistClass') {
+      const itemPrice = capitalistInfo.goodsPrices[Usingitem as keyof CapitalistGoodsAndServices];
+      isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= capitalistInfo.goodsAndServices[Usingitem as keyof CapitalistGoodsAndServices] &&
+                workerInfo.income >= itemPrice * numberValue;
+    } else if (key === 'State') {
+      const itemPrice = boardInfo.goodsAndServices[Usingitem as keyof StategoodsAndServices];
+      if (Usingitem === 'Health' || Usingitem === 'Education') {
+        isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= boardInfo.goodsAndServices[Usingitem as keyof StategoodsAndServices] &&
+                  workerInfo.income >= itemPrice * numberValue;
+      }
+    } else if (key === 'Import') {
+      // Handle Import logic if needed
+    } else {
+      const itemPrice = boardInfo.goodsAndServices[Usingitem as keyof StategoodsAndServices];
+      isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= boardInfo.goodsAndServices[Usingitem as keyof StategoodsAndServices] &&
+                workerInfo.income >= itemPrice * numberValue;
+    }
+  
+    if (isValid || value === '') {
+      setInputValue(numberValue);
+      console.log("set"+{numberValue})
+    }
+    setsubmitcondition(isValid);
   };
-  const handleButtonClick = () => {
+  const handleVotingSubmit = () => {
     if (typeof inputValue === 'number') {
-      Board.getInstance().Voting2(inputValue);
       console.log('Submitted value:', inputValue);
+      Board.getInstance().Voting2(inputValue);
     } else {
       console.error('Invalid input value');
     }
-    setShowModal(false);
   };
+  const handleBuyingSubmit = (event: React.MouseEvent<HTMLButtonElement>, source: string) => {
+    if (typeof inputValue === 'number') {
+      if (source === 'CapitalistClass') {
+        WorkerClass.getInstance().getinfo().income -= CapitalistClass.getInstance().getinfo().goodsPrices[Usingitem as keyof CapitalistGoodsAndServices] * inputValue;
+        CapitalistClass.getInstance().getinfo().Revenue += Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices) * inputValue;
+      }
+      else if (source === 'State') {
+        console.log("State"+Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices)+inputValue)
+        WorkerClass.getInstance().addincome (-Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices) * inputValue);
+        Board.getInstance().getinfo().StateTreasury += Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices) * inputValue;
+      }
+      else {
+        WorkerClass.getInstance().getinfo().income -= CapitalistClass.getInstance().getinfo().goodsPrices[Usingitem as keyof CapitalistGoodsAndServices] * inputValue;
+        CapitalistClass.getInstance().getinfo().Revenue += Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices) * inputValue;
+      }
+      console.log('Submitted value:', inputValue);
+      WorkerClass.getInstance().Buying(inputValue, Usingitem, () => {
+        setBasicAction();
+      },
+        (error) => {
+          alert(error);
+        })
+    } else {
+      console.error('Invalid input value');
+    }
+  };
+
   return (
     <div className="container">
       <div className="d-flex justify-content-center" id="menu">
@@ -491,14 +595,22 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
                   <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => setvotingrapidly(false)}
                     disabled={!votingrapidly}>Voting after Production</button>
                 </div>
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('A')} data-bs-dismiss="modal"
-                  disabled={usedBasicActions}>A</button>
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('B')} data-bs-dismiss="modal"
-                  disabled={usedBasicActions}>B</button>
-                <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('C')} data-bs-dismiss="modal"
-                  disabled={usedBasicActions}>C</button></div>
 
-
+                <div>-
+                  <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('A')} data-bs-dismiss="modal"
+                    data-bs-toggle={votingrapidly ? "modal" : undefined}
+                    data-bs-target={votingrapidly ? "#Voting" : undefined}
+                    disabled={usedBasicActions}>A</button>
+                  <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('B')} data-bs-dismiss="modal"
+                    data-bs-toggle={votingrapidly ? "modal" : undefined}
+                    data-bs-target={votingrapidly ? "#Voting" : undefined}
+                    disabled={usedBasicActions}>B</button>
+                  <button type="button" style={{ margin: '10px' }} className="btn btn-primary pp-2 flex-fill" onClick={() => handleVote('C')} data-bs-dismiss="modal"
+                    data-bs-toggle={votingrapidly ? "modal" : undefined}
+                    data-bs-target={votingrapidly ? "#Voting" : undefined}
+                    disabled={usedBasicActions}>C</button>
+                </div>
+              </div>
               <label data-bs-dismiss="modal" aria-label="Close" />
             </div>
             {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
@@ -669,42 +781,27 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
           </div>
         </div>
       </div>
-      <div className="modal fade" id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div className="modal fade " id="Voting" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true" >
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">SwapWorker</h1>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h5 className="modal-title">voting + {votingName}</h5>
             </div>
-            <div>当前有{Board.getInstance().getinfo().unempolyment.filter(worker => worker.skill === 'unskill').length}</div>
             <div className="modal-body">
-              <div className="d-flex">
-                <ul className="p-2 flex-fill">
-                  <div>state</div>
-                  {Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-                    <div key={index} style={{ margin: '50px' }}>
-                      {company.workingworkers.filter(worker => worker.skill === company.industry).length > company.skilledworker && company.workingworkers.filter(worker => worker.skill !== "unskill").length > company.skilledworker && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
-                      {company.workingworkers.filter(worker => worker.skill === company.industry).length > company.skilledworker && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
-                        <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
-                          () => { setfreeAction(); },
-                          (error) => {
-                            alert(error);
-                          })} className="btn btn-primary">Swap Worker</button>}</div>))}
-                    </div>))}</ul>
-                <ul className="p-2 flex-fill">
-                  <div>CapitalistClass</div>
-                  {CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-                    <div key={index} style={{ margin: '50px' }}>
-                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && <Image src={company.imageUrl} alt={`Image of ${company.name}`} width={100} height={100} />}
-                      {company.workingworkers.filter(worker => worker.skill === company.industry).length >= company.skilledworker && company.workingworkers.map((worker: Worker, index2: React.Key | null | undefined) => (
-                        <div key={index2}>{worker.skill !== "unskill" && <button onClick={() => Board.getInstance().swapworker(worker, company,
-                          () => { setfreeAction(); },
-                          (error) => {
-                            alert(error);
-                          })} className="btn btn-primary">Swap Worker</button>}</div>))}
-                    </div>))}</ul>
+              <div>the worker has {Board.getInstance().getinfo().Votingresult.Workerclass}</div>
+              <div>the Capitalistclass has {Board.getInstance().getinfo().Votingresult.Capitalistclass}</div>
+              <div className="input-group mb-3">
+                <span className="input-group-text" id="basic-addon1">Number</span>
+                <input
+                  type="text"
+                  className="form-control"
+                  aria-label="Input number"
+                  value={inputValue}
+                  onChange={(event) => handleInputChange(event, 'Influence')}
+                />
               </div>
-              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+              <button onClick={handleVotingSubmit} className="btn btn-primary" type="button" data-bs-dismiss="modal">Submit</button>
+
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -712,35 +809,25 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ onActionComplete, usedBasic
           </div>
         </div>
       </div>
-      {showVotingModal && (
-        <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">voting + {votingName}</h5>
-              </div>
-              <div className="modal-body">
-                <div>the worker has {Board.getInstance().getinfo().Votingresult.Workerclass}</div>
-                <div>the Capitalistclass has {Board.getInstance().getinfo().Votingresult.Capitalistclass}</div>
-                <div className="input-group mb-3">
-                  <span className="input-group-text" id="basic-addon1">the influence</span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    aria-label="Amount (to the nearest dollar)"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <button onClick={handleButtonClick} className="btn btn-primary">Submit</button>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
+      <div className="modal fade" id="Buying" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
+            <div className="modal-body">
+              {renderBuyingOptions(Usingitem)}
+            </div>
+            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div >
   );
 };
@@ -806,9 +893,9 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
           <tr>
             <td rowSpan={3}><Image src={Board.getInstance().getinfo().BusinessDeal.imageUrl} alt="Description of Image 1" width={100} height={100} /></td>
             <td>{data.board.getinfo().StateTreasury}</td>
-            <td>{data.board.getinfo().PublicServices.Health}</td>
-            <td>{data.board.getinfo().PublicServices.Education}</td>
-            <td>{data.board.getinfo().PublicServices.Influence}</td>
+            <td>{data.board.getinfo().goodsAndServices.Health}</td>
+            <td>{data.board.getinfo().goodsAndServices.Education}</td>
+            <td>{data.board.getinfo().goodsAndServices.Influence}</td>
             <td>{data.board.getinfo().loan}</td>
           </tr>
           <tr>
