@@ -6,9 +6,9 @@ import { parse, stringify } from 'flatted';
 type skillkind = 'Agriculture' | 'Luxury' | 'Heathlcare' | 'Education' | 'Media' | 'unskill';
 export interface Worker {
     skill: skillkind;
-    location: Company | null;
+    location: Company | null | keyof TradeUnions;
 }
-interface Population {
+export interface Population {
     Natureofposition: {
         Agriculture: number;
         Luxury: number;
@@ -135,7 +135,9 @@ export class WorkerClass extends EventEmitter {
         this.addWorker("Education", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
         this.addWorker("unskill", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
         this.addWorker("Heathlcare", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
-        this.addWorker("unskill", null);
+        if (Board.getInstance().getinfo().unempolyment.length === 0) {
+            this.addWorker("unskill", null);
+        }
         this.emit('update');
     }
     SetWorkerClass(data: WorkerClass) {
@@ -168,17 +170,20 @@ export class WorkerClass extends EventEmitter {
     }
     addWorker(skill: skillkind, location: Company | null) {
         const worker = { skill, location };
-        if (location !== null&&location.workingworkers.length<location.requiredWorkers) {
+        if (location !== null && location.workingworkers.length < location.requiredWorkers) {
             location.workingworkers.push(worker);
             const industry = location.industry as keyof Population["Natureofposition"];
             this.population.Natureofposition[industry] += 1;
             this.population.worker.push(worker);
             this.calculatePopulationLevel();
         }
-        else {
+        else if (location === null) {
             Board.getInstance().getinfo().unempolyment.push(worker);
             this.population.worker.push(worker);
-        this.calculatePopulationLevel();
+            this.calculatePopulationLevel();
+        }
+        else {
+
         }
         this.emit('update');
     }
@@ -272,10 +277,29 @@ export class WorkerClass extends EventEmitter {
             loan: this.loan,
         };
     }
-    Buying(inputValue: number,Usingitem:keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
-        this.goodsAndServices[Usingitem]+=inputValue;
+    Buying(inputValue: number, Usingitem: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
+        this.goodsAndServices[Usingitem] += inputValue;
         onSuccess();
         this.emit("update");
-      }
+    }
+    addunion(union: keyof Population["Natureofposition"]) {
+        this.tradeUnions[union as keyof TradeUnions] = true;
+        this.emit('update');
+    }
+    updateWorker(worker: Worker, newLocation: Company) {
+        if (worker.location && typeof worker.location === 'object' && 'workingworkers' in worker.location) {
+            const currentCompany = worker.location as Company;
+            const index = currentCompany.workingworkers.indexOf(worker);
+            if (index !== -1) {
+                currentCompany.workingworkers.splice(index, 1);
+            }
+        }
+        else {
+            Board.getInstance().removeworker(worker);
+        }
+        worker.location = newLocation;
+        newLocation.workingworkers.push(worker);
+        this.emit('update');
+    }
 }
 

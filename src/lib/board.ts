@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
 import { Company } from "./company";
 import { parse, stringify } from 'flatted';
-import { CapitalistClass } from "./Capitalist class";
+import { CapitalistClass,CapitalistGoodsAndServices} from "./Capitalist class";
 export interface Policy {
     Fiscal: string;
     Labor: string;
@@ -18,6 +18,7 @@ interface PolicyMap {
     B: number;
     C: number;
 }
+export type ExportKeys = 'Food1' | 'Food2' | 'health1' | 'health2' | 'Luxury1' | 'Luxury2' | 'Education1' | 'Education2';
 export interface StategoodsAndServices {
     Health: number;
     Education: number;
@@ -31,15 +32,20 @@ export interface BusinessDeal {
     imageUrl: string;
 }
 export interface Export {
-    item: string;
-    amount: number;
-    price: number;
+    Food1: Item;
+    Food2: Item;
+    health1: Item;
+    health2: Item;
+    Luxury1: Item;
+    Luxury2: Item;
+    Education1: Item;
+    Education2: Item;
+    imageUrl: string;
 }
-interface Import {
-    item: string;
+export interface Item {
+    item: keyof CapitalistGoodsAndServices;
     amount: number;
     price: number;
-    tax?: { [key: string]: number };
 }
 interface VotingRules {
     [key: string]: string[];
@@ -47,6 +53,8 @@ interface VotingRules {
 interface Votingbag {
     Workerclass: number;
     Capitalistclass: number;
+    agree: (WorkerClass | CapitalistClass)[];
+    disagree: (WorkerClass | CapitalistClass)[];
 }
 export class Board extends EventEmitter {
     private Votingbag: Votingbag;
@@ -55,26 +63,31 @@ export class Board extends EventEmitter {
     private Policy: Policy;
     private StateTreasury: number;
     private goodsAndServices: StategoodsAndServices;
-    private BusinessDeal: BusinessDeal;
-    private Export: Export[];
-    private Import: Import[];
+    private BusinessDeal: BusinessDeal[];
+    private Export: Export;
     private StateCompany: StateCompany[];
     private PolicyVoting: Policy;
     private policyVotingone: keyof Policy;
     private votingRules: VotingRules;
     private loan: number;
     private unempolyment: Worker[];
+    private DemonStration: boolean;
     constructor() {
         super();
+        this.DemonStration = false;
         this.policyVotingone = "Fiscal"!;
         this.Votingresult = {
             Workerclass: 0,
             Capitalistclass: 0,
+            agree: [],
+            disagree: [],
         }
         this.StateCompany = [];
         this.Votingbag = {
             Workerclass: 0,
             Capitalistclass: 0,
+            agree: [],
+            disagree: [],
         };
         this.unempolyment = [];
         this.loan = 0;
@@ -87,18 +100,15 @@ export class Board extends EventEmitter {
             Foreign: 'B',
             Immigration: 'B',
         };
-        this.Export = [{ item: 'Food', amount: 0, price: 0 }],
-            this.Import = [
-                { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
-                { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
-            ]
-        this.StateTreasury = 120,
+        this.Export = Exportcards[Math.floor(Math.random() * Exportcards.length)],
+            this.StateTreasury = 120,
             this.goodsAndServices = {
                 Health: 6,
                 Education: 6,
                 Influence: 4,
             };
-        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.BusinessDeal = [];
+        this.BusinessDeal.push(BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)]);
         this.PolicyVoting = {
             Fiscal: '',
             Labor: '',
@@ -129,6 +139,7 @@ export class Board extends EventEmitter {
         return Board.instance;
     }
     setBoard(data: Board) {
+        this.DemonStration = data.DemonStration;
         this.loan = data.loan;
         this.Policy = data.Policy;
         this.Export = data.Export;
@@ -137,17 +148,26 @@ export class Board extends EventEmitter {
         this.BusinessDeal = data.BusinessDeal;
         this.PolicyVoting = data.PolicyVoting;
         this.StateCompany = data.StateCompany;
+        this.Votingbag = data.Votingbag;
+        this.unempolyment = data.unempolyment;
     }
     Initialization2p() {
         this.Votingresult = {
             Workerclass: 0,
             Capitalistclass: 0,
+            agree: [],
+            disagree: [],
         }
-        this.unempolyment = [];
+        this.BusinessDeal = [];
+        this.BusinessDeal.push(BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)]);
+        this.DemonStration = false;
+        this.unempolyment.length = 0;
         this.loan = 0;
         this.Votingbag = {
             Workerclass: 5,
             Capitalistclass: 5,
+            agree: [],
+            disagree: [],
         }
         this.Policy = {
             Fiscal: 'C',
@@ -158,18 +178,14 @@ export class Board extends EventEmitter {
             Foreign: 'B',
             Immigration: 'B',
         };
-        this.Export = [{ item: 'Food', amount: 0, price: 0 }],
-            this.Import = [
-                { item: 'Luxury', amount: 0, price: 0, tax: { A: 15, B: 10, C: 5 } },
-                { item: 'Food', amount: 0, price: 0, tax: { A: 10, B: 5, C: 3 } }
-            ]
-        this.StateTreasury = 120,
+        this.Export = Exportcards[Math.floor(Math.random() * Exportcards.length)],
+            this.StateTreasury = 120,
             this.goodsAndServices = {
                 Health: 6,
                 Education: 6,
                 Influence: 4,
             };
-        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.setBusinessDeal;
         this.PolicyVoting = {
             Fiscal: '',
             Labor: '',
@@ -194,36 +210,28 @@ export class Board extends EventEmitter {
     }
     addPublicService(industry: String, number: number) {
         switch (industry) {
-            case 'Heathlcare':
+            case 'Healthcare':
+            case 'Health':
                 this.goodsAndServices.Health += number;
                 break;
             case 'Education':
                 this.goodsAndServices.Education += number;
                 break;
             case 'Media':
+            case 'Influence':
                 this.goodsAndServices.Influence += number;
                 break;
             default:
                 throw new Error(`Industry type ${industry} does not exist`);
         }
     }
-    updatePublicService(serviceType: keyof StategoodsAndServices, amount: number): void {
-        if (this.goodsAndServices.hasOwnProperty(serviceType)) {
-            this.goodsAndServices[serviceType]! += amount;
-        } else {
-            throw new Error(`Public service type ${serviceType} does not exist`);
-        }
-    }
-    addExport(item: string, amount: number, price: number): void {
-        this.Export.push({ item, amount, price });
+    reflashExport(): void {
+        this.Export = Exportcards[Math.floor(Math.random() * Exportcards.length)],
         this.emit('update');
-    }
-    addImport(item: string, amount: number, price: number): void {
-        this.Import.push({ item, amount, price });
-        this.emit('update', `Export added: ${item}, Amount: ${amount}, Price: $${price}`);
     }
     getinfo() {
         return {
+            DemonStration: this.DemonStration,
             Votingresult: this.Votingresult,
             Votingbag: this.Votingbag,
             Policy: this.Policy,
@@ -232,14 +240,35 @@ export class Board extends EventEmitter {
             goodsAndServices: this.goodsAndServices,
             BusinessDeal: this.BusinessDeal,
             Export: this.Export,
-            Import: this.Import,
             companys: this.StateCompany,
             loan: this.loan,
             unempolyment: this.unempolyment
         };
     }
     setBusinessDeal() {
-        this.BusinessDeal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+        this.BusinessDeal = [];
+        if (this.Policy.Foreign === 'A') {
+        }
+        if (this.Policy.Foreign === 'B') {
+            let deal;
+            do {
+                deal = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+            } while (this.BusinessDeal.includes(deal));
+            this.BusinessDeal.push(deal);
+        }
+        if (this.Policy.Foreign === 'C') {
+            let deal1, deal2;
+            do {
+                deal1 = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+            } while (this.BusinessDeal.includes(deal1));
+            this.BusinessDeal.push(deal1);
+
+            do {
+                deal2 = BusinessDealcards[Math.floor(Math.random() * BusinessDealcards.length)];
+            } while (this.BusinessDeal.includes(deal2));
+            this.BusinessDeal.push(deal2);
+        }
+
         this.emit('update');
     }
     setcompany2p() {
@@ -278,33 +307,13 @@ export class Board extends EventEmitter {
         }
         this.emit('update');
     }
-    votingabill(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
-        if (this.Policy.hasOwnProperty(policy)) {
-            const currentGrade = this.Policy[policy];
-            if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
-                this.PolicyVoting[policy] = votingAim;
-                this.policyVotingone = policy;
-                this.emit('update');
-                onSuccess();
-            } else {
-                const errorMessage = `Invalid voting aim or policy already voted: ${policy}`;
-                this.emit('update', errorMessage);
-                onError(errorMessage);
-            }
-        } else {
-            const errorMessage = `Invalid policy: ${policy}`;
-            this.emit('voteError', errorMessage);
-            onError(errorMessage);
-        }
-    }
     addworker(Worker: Worker) {
         this.unempolyment.push(Worker);
     }
-    removeworker(Worker: Worker, location: Company) {
+    removeworker(Worker: Worker) {
         const index = this.unempolyment.indexOf(Worker);
         if (index !== -1) {
             this.unempolyment.splice(index, 1);
-            location.workingworkers.push(Worker);
         }
     }
     swapworker(Worker: Worker, location: Company, onSuccess: () => void, onError: (message: string) => void) {
@@ -334,13 +343,34 @@ export class Board extends EventEmitter {
         this.emit('update');
         onSuccess();
     }
-    Votingrapidly(policy: keyof Policy, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
+    votingabill(policy: keyof Policy, votingAim: string, classname: WorkerClass | CapitalistClass, onSuccess: () => void, onError: (message: string) => void) {
+        if (this.Policy.hasOwnProperty(policy)) {
+            const currentGrade = this.Policy[policy];
+            if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
+                this.PolicyVoting[policy] = votingAim;
+                this.policyVotingone = policy;
+                this.Votingbag.agree.push(classname);
+                this.emit('update');
+                onSuccess();
+            } else {
+                const errorMessage = `Invalid voting aim or policy already voted: ${policy}`;
+                this.emit('update', errorMessage);
+                onError(errorMessage);
+            }
+        } else {
+            const errorMessage = `Invalid policy: ${policy}`;
+            this.emit('voteError', errorMessage);
+            onError(errorMessage);
+        }
+    }
+    Votingrapidly(policy: keyof Policy, classname: WorkerClass | CapitalistClass, votingAim: string, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
             const currentGrade = this.Policy[policy];
             if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim)
                 && (!this.PolicyVoting[policy] || this.PolicyVoting[policy] === votingAim)) {
                 this.PolicyVoting[policy] = votingAim;
                 this.policyVotingone = policy;
+                this.Votingbag.agree.push(classname);
                 this.Votingforbag();
                 onSuccess();
                 this.emit('update');
@@ -376,52 +406,147 @@ export class Board extends EventEmitter {
             }
         }
     }
-    Voting2(inputValue: number) {
-        if ((inputValue + this.Votingresult.Workerclass) >= this.Votingresult.Capitalistclass) {
+    Voting2(workerInfluence: number, capitalistInfluence: number) {
+        let totalAgreeInfluence = 0;
+        let totalDisagreeInfluence = 0;
+
+        if (this.Votingbag.agree.filter(member => member instanceof WorkerClass).length > 0) {
+            totalAgreeInfluence += workerInfluence + this.Votingresult.Workerclass;
+        } else {
+            totalDisagreeInfluence += workerInfluence + this.Votingresult.Workerclass;
+        }
+
+        if (this.Votingbag.agree.filter(member => member instanceof CapitalistClass).length > 0) {
+            totalAgreeInfluence += capitalistInfluence + this.Votingresult.Capitalistclass;
+        } else {
+            totalDisagreeInfluence += capitalistInfluence + this.Votingresult.Capitalistclass;
+        }
+
+        if (totalAgreeInfluence >= totalDisagreeInfluence) {
             this.Policy[this.policyVotingone] = this.PolicyVoting[this.policyVotingone];
             this.PolicyVoting[this.policyVotingone] = '';
             this.Votingbag.Capitalistclass += this.Votingresult.Capitalistclass;
+
             switch (this.policyVotingone) {
-                case "Fiscal":
+                case 'Fiscal':
                     Board.getInstance().setcompany2p();
                     break;
-                case "Labor":
+                case 'Labor':
+                    const policy = this.Policy[this.policyVotingone];
                     const mapping: PolicyMap = {
                         'A': 3,
                         'B': 2,
                         'C': 1
                     };
-                    for (let i = 0; i < Board.getInstance().getinfo().companys.length; i++) {
-                        const policy = this.Policy[this.policyVotingone];
-                        if (mapping[policy as keyof PolicyMap] < Board.getInstance().getinfo().companys[i].wages.level) {
-                            Board.getInstance().getinfo().companys[i].wages.level = mapping[policy as keyof PolicyMap];
+                    Board.getInstance().getinfo().companys.forEach(company => {
+                        if (mapping[policy as keyof PolicyMap] !== company.wages.level) {
+                            company.wages.level = mapping[policy as keyof PolicyMap];
                         }
-                    }
-                    for (let i = 0; i < CapitalistClass.getInstance().getinfo().companys.length; i++) {
-                        const policy = this.Policy[this.policyVotingone];
-                        if (mapping[policy as keyof PolicyMap] < Board.getInstance().getinfo().companys[i].wages.level) {
-                            Board.getInstance().getinfo().companys[i].wages.level = mapping[policy as keyof PolicyMap];
+                    });
+                    CapitalistClass.getInstance().getinfo().companys.forEach(company => {
+                        if (mapping[policy as keyof PolicyMap] !== company.wages.level) {
+                            company.wages.level = mapping[policy as keyof PolicyMap];
                         }
-                    }
+                    });
+                    this.emit("update");
                     break;
-                case "Taxation":
-                case "Health":
-                case "Education":
-                case "Foreign":
-                case "Immigration":
+                case 'Taxation':
+                case 'Health':
+                case 'Education':
+                case 'Foreign':
+                case 'Immigration':
+                    break;
             }
 
-            WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 3);
+            if (this.Votingbag.agree.length > 0) {
+                if (this.Votingbag.agree[0] instanceof WorkerClass) {
+                    WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 3);
+                    if (this.Votingbag.agree.length > 1) {
+                        CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score + 1);
+                    }
+                } else {
+                    CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score + 3);
+                    if (this.Votingbag.agree.length > 1) {
+                        WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 1);
+                    }
+                }
+            }
+
+            this.Votingbag.disagree.forEach(member => {
+                if (member instanceof WorkerClass) {
+                    this.Votingbag.Workerclass++;
+                } else if (member instanceof CapitalistClass) {
+                    this.Votingbag.Capitalistclass++;
+                }
+            });
+
         } else {
             this.Votingbag.Workerclass += this.Votingresult.Workerclass;
             this.PolicyVoting[this.policyVotingone] = '';
             console.log(this.PolicyVoting[this.policyVotingone]);
+            this.Votingbag.agree.forEach(member => {
+                if (member instanceof WorkerClass) {
+                    this.Votingbag.Workerclass++;
+                } else if (member instanceof CapitalistClass) {
+                    this.Votingbag.Capitalistclass++;
+                }
+            });
         }
+
+        this.Votingbag.agree = [];
+        this.Votingbag.disagree = [];
         this.Votingresult.Capitalistclass = 0;
         this.Votingresult.Workerclass = 0;
-        this.emit("updata");
+        this.emit("update");
     }
-    goodsPrices(item: keyof StategoodsAndServices): number {
+    addVotingbag(number: number, classname: WorkerClass | CapitalistClass): any {
+        if (classname instanceof WorkerClass) {
+            this.Votingbag.Workerclass += number;
+        }
+        this.Votingbag.Capitalistclass += number;
+    }
+    checkAgree(classname: WorkerClass | CapitalistClass): string {
+        if (this.Votingbag.agree.some(member => member === classname)) {
+            return "agree";
+        }
+        if (this.Votingbag.disagree.some(member => member === classname)) {
+            return "disagree";
+        }
+        return "no";
+    }
+    setAgree(classname: WorkerClass | CapitalistClass, agree: boolean) {
+        if (agree) {
+            this.Votingbag.agree.push(classname);
+        }
+        else {
+            this.Votingbag.disagree.push(classname);
+        }
+        this.emit("update")
+    }
+    setDemonStration(is: boolean) {
+        this.DemonStration = is;
+        this.emit("update");
+    }
+    goodsPrices(item: String): number {
+        if (item === 'Food') {
+            console.log("111");
+            if (this.Policy.Foreign === 'A') {
+                return 10;
+            } else if (this.Policy.Foreign === 'B') {
+                return 5;
+            } else {
+                return 0;
+            }
+        }
+        if (item === 'Luxury') {
+            if (this.Policy.Foreign === 'A') {
+                return 6;
+            } else if (this.Policy.Foreign === 'B') {
+                return 3;
+            } else {
+                return 0;
+            }
+        }
         if (item === 'Health') {
             if (this.Policy.Health === 'A') {
                 return 0;
@@ -443,7 +568,7 @@ export class Board extends EventEmitter {
         if (item === 'Influence') {
             return 10;
         }
-        return 10;
+        return 0;
     }
 }
 
@@ -457,4 +582,193 @@ const BusinessDealcards: BusinessDeal[] = [
     { item: "Luxury", amount: 12, price: 50, tax: { "A": 24, "B": 12, "C": 0 }, imageUrl: "/12Luxury.jpg" },
 ];
 
+const Exportcards: Export[] = [
+    {
+        Food1: { item: "Food", amount: 2, price: 25 },
+        Food2: { item: "Food", amount: 6, price: 65 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 7, price: 40 },
+        Luxury1: { item: "Luxury", amount: 4, price: 20 },
+        Luxury2: { item: "Luxury", amount: 7, price: 35 },
+        Education1: { item: "Education", amount: 3, price: 25 },
+        Education2: { item: "Education", amount: 6, price: 45 },
+        imageUrl: "/export/export1_01.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 2, price: 15 },
+        Food2: { item: "Food", amount: 6, price: 50 },
+        health1: { item: "Health", amount: 4, price: 25 },
+        health2: { item: "Health", amount: 8, price: 45 },
+        Luxury1: { item: "Luxury", amount: 3, price: 25 },
+        Luxury2: { item: "Luxury", amount: 5, price: 40 },
+        Education1: { item: "Education", amount: 3, price: 15 },
+        Education2: { item: "Education", amount: 7, price: 35 },
+        imageUrl: "/export/export1_02.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 2, price: 15 },
+        Food2: { item: "Food", amount: 6, price: 50 },
+        health1: { item: "Health", amount: 4, price: 30 },
+        health2: { item: "Health", amount: 7, price: 50 },
+        Luxury1: { item: "Luxury", amount: 3, price: 15 },
+        Luxury2: { item: "Luxury", amount: 7, price: 35 },
+        Education1: { item: "Education", amount: 3, price: 20 },
+        Education2: { item: "Education", amount: 5, price: 35 },
+        imageUrl: "/export/export1_03.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 2, price: 15 },
+        Food2: { item: "Food", amount: 6, price: 45 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 5, price: 30 },
+        Luxury1: { item: "Luxury", amount: 3, price: 20 },
+        Luxury2: { item: "Luxury", amount: 7, price: 50 },
+        Education1: { item: "Education", amount: 4, price: 25 },
+        Education2: { item: "Education", amount: 8, price: 45 },
+        imageUrl: "/export/export1_04.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 4, price: 40 },
+        Food2: { item: "Food", amount: 7, price: 70 },
+        health1: { item: "Health", amount: 2, price: 15 },
+        health2: { item: "Health", amount: 7, price: 50 },
+        Luxury1: { item: "Luxury", amount: 3, price: 25 },
+        Luxury2: { item: "Luxury", amount: 6, price: 50 },
+        Education1: { item: "Education", amount: 3, price: 20 },
+        Education2: { item: "Education", amount: 5, price: 30 },
+        imageUrl: "/export/export1_05.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 3, price: 30 },
+        Food2: { item: "Food", amount: 7, price: 70 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 5, price: 35 },
+        Luxury1: { item: "Luxury", amount: 4, price: 30 },
+        Luxury2: { item: "Luxury", amount: 6, price: 40 },
+        Education1: { item: "Education", amount: 2, price: 15 },
+        Education2: { item: "Education", amount: 6, price: 35 },
+        imageUrl: "/export/export1_06.gif",
+    },
+    {
+        Food1: { item: "Food", amount: 4, price: 50 },
+        Food2: { item: "Food", amount: 8, price: 95 },
+        health1: { item: "Health", amount: 3, price: 15 },
+        health2: { item: "Health", amount: 7, price: 35 },
+        Luxury1: { item: "Luxury", amount: 3, price: 20 },
+        Luxury2: { item: "Luxury", amount: 5, price: 30 },
+        Education1: { item: "Education", amount: 2, price: 15 },
+        Education2: { item: "Education", amount: 6, price: 40 },
+        imageUrl: "/export/export1_07.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 3, price: 30 },
+        Food2: { item: "Food", amount: 5, price: 50 },
+        health1: { item: "Health", amount: 3, price: 25 },
+        health2: { item: "Health", amount: 7, price: 55 },
+        Luxury1: { item: "Luxury", amount: 2, price: 10 },
+        Luxury2: { item: "Luxury", amount: 6, price: 35 },
+        Education1: { item: "Education", amount: 4, price: 25 },
+        Education2: { item: "Education", amount: 8, price: 45 },
+        imageUrl: "/export/export1_08.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 3, price: 35 },
+        Food2: { item: "Food", amount: 7, price: 75 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 5, price: 35 },
+        Luxury1: { item: "Luxury", amount: 2, price: 10 },
+        Luxury2: { item: "Luxury", amount: 6, price: 35 },
+        Education1: { item: "Education", amount: 4, price: 25 },
+        Education2: { item: "Education", amount: 7, price: 40 },
+        imageUrl: "/export/export1_09.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 4, price: 45 },
+        Food2: { item: "Food", amount: 8, price: 85 },
+        health1: { item: "Health", amount: 3, price: 15 },
+        health2: { item: "Health", amount: 5, price: 25 },
+        Luxury1: { item: "Luxury", amount: 2, price: 15 },
+        Luxury2: { item: "Luxury", amount: 6, price: 40 },
+        Education1: { item: "Education", amount: 3, price: 15 },
+        Education2: { item: "Education", amount: 7, price: 35 },
+        imageUrl: "/export/export1_10.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 3, price: 30 },
+        Food2: { item: "Food", amount: 5, price: 50 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 6, price: 50 },
+        Luxury1: { item: "Luxury", amount: 3, price: 25 },
+        Luxury2: { item: "Luxury", amount: 7, price: 55 },
+        Education1: { item: "Education", amount: 3, price: 20 },
+        Education2: { item: "Education", amount: 7, price: 50 },
+        imageUrl: "/export/export1_11.gif",
+    },
+
+    {
+        Food1: { item: "Food", amount: 4, price: 45 },
+        Food2: { item: "Food", amount: 7, price: 80 },
+        health1: { item: "Health", amount: 2, price: 15 },
+        health2: { item: "Health", amount: 6, price: 40 },
+        Luxury1: { item: "Luxury", amount: 3, price: 20 },
+        Luxury2: { item: "Luxury", amount: 5, price: 30 },
+        Education1: { item: "Education", amount: 3, price: 20 },
+        Education2: { item: "Education", amount: 7, price: 50 },
+        imageUrl: "/export/export1_12.gif",
+    },
+    {
+        Food1: { item: "Food", amount: 3, price: 25 },
+        Food2: { item: "Food", amount: 7, price: 55 },
+        health1: { item: "Health", amount: 2, price: 10 },
+        health2: { item: "Health", amount: 6, price: 35 },
+        Luxury1: { item: "Luxury", amount: 4, price: 25 },
+        Luxury2: { item: "Luxury", amount: 8, price: 45 },
+        Education1: { item: "Education", amount: 3, price: 20 },
+        Education2: { item: "Education", amount: 5, price: 35 },
+        imageUrl: "/export/export1_13.gif",
+    },
+    {
+        Food1: { item: "Food", amount: 3, price: 25 },
+        Food2: { item: "Food", amount: 6, price: 50 },
+        health1: { item: "Health", amount: 3, price: 20 },
+        health2: { item: "Health", amount: 7, price: 40 },
+        Luxury1: { item: "Luxury", amount: 3, price: 20 },
+        Luxury2: { item: "Luxury", amount: 7, price: 50 },
+        Education1: { item: "Education", amount: 2, price: 15 },
+        Education2: { item: "Education", amount: 7, price: 55 },
+        imageUrl: "/export/export1_14.gif"
+    },
+    {
+        Food1: { item: "Food", amount: 2, price: 20 },
+        Food2: { item: "Food", amount: 6, price: 55 },
+        health1: { item: "Health", amount: 3, price: 25 },
+        health2: { item: "Health", amount: 5, price: 40 },
+        Luxury1: { item: "Luxury", amount: 4, price: 30 },
+        Luxury2: { item: "Luxury", amount: 8, price: 55 },
+        Education1: { item: "Education", amount: 3, price: 15 },
+        Education2: { item: "Education", amount: 7, price: 35 },
+        imageUrl: "/export/export1_15.gif",
+    },
+    {
+        Food1: { item: "Food", amount: 2, price: 20 },
+        Food2: { item: "Food", amount: 6, price: 55 },
+        health1: { item: "Health", amount: 3, price: 25 },
+        health2: { item: "Health", amount: 5, price: 40 },
+        Luxury1: { item: "Luxury", amount: 4, price: 30 },
+        Luxury2: { item: "Luxury", amount: 8, price: 55 },
+        Education1: { item: "Education", amount: 3, price: 15 },
+        Education2: { item: "Education", amount: 7, price: 35 },
+        imageUrl: "/export/export1_16.gif",
+    },
+
+]
 
