@@ -193,7 +193,7 @@ export class WorkerClass extends EventEmitter {
             this.emit('update');
         }
     }
-    using(item: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
+    using(item: keyof GoodsAndServices) {
         const populationLevel = this.population.population_level;
         const goods = this.goodsAndServices;
         let errorMessage: string | null = null;
@@ -212,7 +212,7 @@ export class WorkerClass extends EventEmitter {
                 if (goods.Health >= populationLevel) {
                     goods.Health -= populationLevel;
                     this.addWorker('unskill', null);
-                    onSuccess();
+                  
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Health`;
@@ -225,7 +225,7 @@ export class WorkerClass extends EventEmitter {
                     this.addWorker('unskill', null);
                     this.score += 2;
                     this.setProsperity(this.prosperity + 1);
-                    onSuccess();
+                
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Health`;
@@ -236,7 +236,7 @@ export class WorkerClass extends EventEmitter {
                 if (goods.Luxury >= populationLevel) {
                     goods.Luxury -= populationLevel;
                     this.setProsperity(this.prosperity + 1);
-                    onSuccess();
+             
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Luxury`;
@@ -250,7 +250,6 @@ export class WorkerClass extends EventEmitter {
 
         if (errorMessage) {
             this.emit('update', errorMessage);
-            onError(errorMessage);
         }
     }
     payoffloan(onSuccess: () => void, onError: (message: string) => void) {
@@ -277,9 +276,8 @@ export class WorkerClass extends EventEmitter {
             loan: this.loan,
         };
     }
-    Buying(inputValue: number, Usingitem: keyof GoodsAndServices, onSuccess: () => void, onError: (message: string) => void) {
+    Buying(inputValue: number, Usingitem: keyof GoodsAndServices) {
         this.goodsAndServices[Usingitem] += inputValue;
-        onSuccess();
         this.emit("update");
     }
     addunion(union: keyof Population["Natureofposition"]) {

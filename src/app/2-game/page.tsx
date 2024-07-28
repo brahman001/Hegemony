@@ -8,6 +8,7 @@ import { Board, Policy, StategoodsAndServices, Item, Export, ExportKeys } from '
 import Image from 'next/image'
 import { Company, CapitalistCompany } from '@/lib/company';
 import { parse, stringify } from 'flatted';
+import { comma } from 'postcss/lib/list';
 
 interface GameState {
   nowclass: WorkerClass | CapitalistClass;
@@ -59,9 +60,12 @@ export default function GameRun() {
       maxTurns: 5
     });
   });
-  const [showModal, setShowModal] = useState(false);
+  const [showInitializationModal, setInitializationModal] = useState(false);
+  const [showEatingModal, setEatingModal] = useState(false);
   const [usedBasicActions, setUsedBasicActions] = useState(false);
   const [usedfreeActions, setUsedFreeActions] = useState(false);
+  const [inputValue, setInputValue] = useState<number | string>('');
+  const [submitcondition, setsubmitcondition] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -147,38 +151,38 @@ export default function GameRun() {
     };
   }, []);
   const handleNextRound = () => {
-    setGameState(prev => {
-      if (prev.phase === 'Production') {
-        if (prev.currentTurn < prev.maxTurns) {
-          Production();
-          return {
-            ...prev,
-            currentTurn: prev.currentTurn + 1,
-            currentRound: 1,
-            phase: 'Action'
-          };
-        } else {
-          // Handle end of max turns if necessary
-          return prev;
-        }
-      } else {
+    if (gameState.currentRound === 1 && gameState.currentRound <= 5 && gameState.nowclass instanceof CapitalistClass) {
+      setGameState(prev => ({
+        ...prev,
+        phase: 'Production'
+      }));
+      Production1();
+    }
+    else if (gameState.currentRound === 5 && gameState.currentRound === 5 && gameState.nowclass instanceof CapitalistClass) {
+
+    } else {
+
+      setUsedFreeActions(false);
+      setUsedBasicActions(false);
+      setGameState(prev => {
         const nextClass = toggleNowclass(prev.nowclass);
         const isCapitalistToWorker = prev.nowclass instanceof CapitalistClass && nextClass instanceof WorkerClass;
-        console.log('Transitioning from:');
+        const nextTurn = prev.currentTurn + (isCapitalistToWorker ? 1 : 0);
+
+        const nextPhase = nextTurn >= prev.maxTurns ? 'Production' : prev.phase;
+
         return {
           ...prev,
           nowclass: nextClass,
           currentRound: isCapitalistToWorker ? prev.currentRound + 1 : prev.currentRound,
         };
       }
-    });
-    setUsedBasicActions(false);
-    setUsedFreeActions(false);
+      );
+    }
   };
   const toggleNowclass = (current: WorkerClass | CapitalistClass): WorkerClass | CapitalistClass => {
     return current instanceof WorkerClass ? CapitalistClass.getInstance() : WorkerClass.getInstance();
   };
-
   const handleInitialization = () => {
 
     const board = Board.getInstance();
@@ -196,12 +200,12 @@ export default function GameRun() {
       phase: 'Action'
     }));
     setfirst(false);
-    setShowModal(true);
+    setInitializationModal(true);
     setUsedBasicActions(false);
     setUsedFreeActions(false)
   }
   const handleCloseModal = () => {
-    setShowModal(false);
+    setInitializationModal(false);
     setGameState(prevState => ({
       ...prevState,
       currentTurn: 1,
@@ -216,12 +220,100 @@ export default function GameRun() {
       board: Board.getInstance(),
     });
   }
-  const Production = () => {
-    for (let i = 0; i < Board.getInstance().getinfo().companys.length; i++) {
-
-    }
+  const Production1 = () => {
+    Board.getInstance().Producrion();
+    CapitalistClass.getInstance().Producrion();
+    setEatingModal(true);
   }
+  const Production2 = () => {
+   //纳税然后触发准备阶段
+  }
+  const renderBuyingOptions = () => {
+    return (
+      <div>
+        CapitalistClass
+        <input
+          type="text"
+          className="form-control"
+          aria-label="Input number"
+          value={inputValue}
+          onChange={(event) => handleInputChange(event, 'CapitalistClass')}
+        />
+        <button
+          onClick={(event) => handleBuyingSubmit(event, 'CapitalistClass')}
+          className="btn btn-primary"
+          type="button"
+          data-bs-dismiss="modal"
+          disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food + (inputValue as number) > WorkerClass.getInstance().getinfo().population.population_level}
+        >
+          Submit
+        </button>
+        Import
+        <input
+          type="text"
+          className="form-control"
+          aria-label="Input number"
+          value={inputValue}
+          onChange={(event) => handleInputChange(event, 'Import')}
+        />
+        <button
+          onClick={(event) => handleBuyingSubmit(event, 'Import')}
+          className="btn btn-primary"
+          type="button"
+          data-bs-dismiss="modal"
+          disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food + (inputValue as number) > WorkerClass.getInstance().getinfo().population.population_level}
+        >
+          Submit
+        </button>
+      </div>
+    );
+  }
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    const value = event.target.value;
+    const numberValue = parseFloat(value);
+    let isValid = true;
 
+    const workerInfo = WorkerClass.getInstance().getinfo();
+    const capitalistInfo = CapitalistClass.getInstance().getinfo();
+    const boardInfo = Board.getInstance().getinfo();
+    console.log("workerInfo:", workerInfo);
+    console.log("capitalistInfo:", capitalistInfo);
+    console.log("boardInfo:", boardInfo);
+    console.log("numberValue:", numberValue);
+
+    if (key === 'Import') {
+      const itemPrice = Board.getInstance().goodsPrices('Food');
+      isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= workerInfo.population.population_level &&
+        workerInfo.income >= (10 + itemPrice) * numberValue;
+      console.log("ok" + isValid + itemPrice + numberValue);
+    } else if (key === 'CapitalistClass') {
+      const itemPrice = capitalistInfo.goodsPrices['Food'];
+      isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= workerInfo.population.population_level &&
+        numberValue <= capitalistInfo.goodsAndServices['Food'] &&
+        workerInfo.income >= itemPrice * numberValue;
+    }
+    if (isValid || value === '') {
+      setInputValue(numberValue);
+      console.log("set", { numberValue });
+    }
+    setsubmitcondition(isValid);
+  };
+
+  const handleBuyingSubmit = (event: React.MouseEvent<HTMLButtonElement>, source: string) => {
+    if (typeof inputValue === 'number') {
+      if (source === 'CapitalistClass') {
+        WorkerClass.getInstance().addincome(-CapitalistClass.getInstance().getinfo().goodsPrices.Food * inputValue);
+        CapitalistClass.getInstance().AddRevenue(CapitalistClass.getInstance().getinfo().goodsPrices.Food * inputValue);
+        CapitalistClass.getInstance().addgoodsAndServices('Food', -inputValue);
+      }
+      else {
+        WorkerClass.getInstance().addincome((Board.getInstance().goodsPrices('Food') + 8) * inputValue);
+        Board.getInstance().updateStateTreasury((Board.getInstance().goodsPrices('Food')) * inputValue);
+      }
+      console.log('Submitted value:', inputValue);
+      WorkerClass.getInstance().Buying(inputValue, 'Food');
+    }
+  };
   return (<>
     <>{first && handleInitialization()}</>
     <div className="d-flex">
@@ -233,15 +325,15 @@ export default function GameRun() {
       <button onClick={updateData}>information</button>
     </div>
     {DataTable(data)}
-    <ActionToggle
+    {gameState.phase !== 'Production' && <ActionToggle
       nowclass={gameState.nowclass}
       onActionComplete={() => handleNextRound()}
       usedBasicActions={usedBasicActions}
       usedfreeActions={usedfreeActions}
       setBasicAction={() => setUsedBasicActions(true)}
       setfreeAction={() => setUsedFreeActions(true)}
-    />
-    {showModal && (
+    />}
+    {showInitializationModal && (
       <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -255,6 +347,25 @@ export default function GameRun() {
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathlcare", null); handleCloseModal(); }}>Heathlcare</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Education", null); handleCloseModal(); }}>Education</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Media", null); handleCloseModal(); }}>Media</button>
+            </div>
+            <div className="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div>)}
+    {showEatingModal && (
+      <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">fininsh worker </h5>
+            </div>
+            <div className="modal-body">
+              <p>The game is ready to play!</p>
+              {renderBuyingOptions()}
+              <button type="button" className="btn btn-secondary" onClick={() => {WorkerClass.getInstance().using('Food'); setEatingModal(false);Production2();}}
+                disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food<WorkerClass.getInstance().getinfo().population.population_level}> 
+                Using </button>
             </div>
             <div className="modal-footer">
             </div>
@@ -498,7 +609,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
 
     console.log("Active Path After:", path);
   };
-
   const renderActions = (actionList: Action[], path: number[], keyPrefix: string) => {
     const className = nowclass instanceof WorkerClass ? 'WorkerClass' : 'CapitalistClass';
 
@@ -685,13 +795,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
   const handleUsing = () => {
     WorkerClass.getInstance().using(
       Usingitem,
-      () => {
-        setfreeAction();
-      },
-      (error) => {
-        alert(error);
-      }
     );
+    setfreeAction();
   };
   const handleloan = () => {
     WorkerClass.getInstance().payoffloan(
@@ -785,7 +890,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
     if (typeof inputValue === 'number') {
       if (source === 'CapitalistClass') {
         WorkerClass.getInstance().addincome(-CapitalistClass.getInstance().getinfo().goodsPrices[Usingitem as keyof CapitalistGoodsAndServices] * inputValue);
-        CapitalistClass.getInstance().AddRevenue(Board.getInstance().goodsPrices(Usingitem as keyof StategoodsAndServices) * inputValue);
+        CapitalistClass.getInstance().AddRevenue(CapitalistClass.getInstance().getinfo().goodsPrices[Usingitem as keyof CapitalistGoodsAndServices] * inputValue);
         CapitalistClass.getInstance().addgoodsAndServices(Usingitem, -inputValue);
       }
       else if (source === 'State') {
@@ -807,15 +912,9 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
       }
       console.log('Submitted value:', inputValue);
 
-      WorkerClass.getInstance().Buying(inputValue, Usingitem, () => {
-        setBasicAction();
-        setbuyingtime(prev => (prev === 0 ? 1 : 0));
-      },
-        (error) => {
-          alert(error);
-        })
-    } else {
-      console.error('Invalid input value');
+      WorkerClass.getInstance().Buying(inputValue, Usingitem);
+      setBasicAction();
+      setbuyingtime(prev => (prev === 0 ? 1 : 0));
     }
   };
   const PoliticalPressure = () => {
@@ -1200,11 +1299,11 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
             </div>
             <div>当前有{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Agriculture')}>Agriculture</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury')}>Luxury</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathlcare')}>Heathlcare</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education')}>Education</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media')}>Media</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Agriculture'))}>Agriculture</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury'))}>Luxury</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathlcare'))}>Heathlcare</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education'))}>Education</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media'))}>Media</button>
               {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
             </div>
             <div className="modal-footer">

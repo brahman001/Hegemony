@@ -29,7 +29,6 @@ export class CapitalistClass extends EventEmitter {
     private goodsPrices: { [key in keyof CapitalistGoodsAndServices]: number };
     private Market: CapitalistCompany[];
 
-
     private constructor() {
         super();
         this.Company = [];
@@ -41,10 +40,10 @@ export class CapitalistClass extends EventEmitter {
             Health: 0,
             Education: 0,
             Influence: 1,
-            FoodLimit:8,
-            LuxuryLimit:12,
-            HealthLimit:12,
-            EducationLimit:12,
+            FoodLimit: 8,
+            LuxuryLimit: 12,
+            HealthLimit: 12,
+            EducationLimit: 12,
         };
         this.goodsPrices = {
             Food: 12,
@@ -93,34 +92,35 @@ export class CapitalistClass extends EventEmitter {
         switch (industry) {
             case 'Agriculture':
             case 'Food':
-                if(this.goodsAndServices.Food+number<=this.goodsAndServices.FoodLimit){
+                if (this.goodsAndServices.Food + number <= this.goodsAndServices.FoodLimit) {
                     this.goodsAndServices.Food += number;
+                }else{
+                   this.goodsAndServices.Food = this.goodsAndServices.FoodLimit; 
                 }
-                this.goodsAndServices.Food=this.goodsAndServices.FoodLimit;
                 break;
             case 'Luxury':
-                if(this.goodsAndServices.Luxury+number<=this.goodsAndServices.LuxuryLimit){
+                if (this.goodsAndServices.Luxury + number <= this.goodsAndServices.LuxuryLimit) {
                     this.goodsAndServices.Luxury += number;
                 }
-                else{
-                    this.goodsAndServices.Luxury=this.goodsAndServices.LuxuryLimit;
+                else {
+                    this.goodsAndServices.Luxury = this.goodsAndServices.LuxuryLimit;
                 }
                 break;
             case 'Healthcare':
             case 'Health':
-                if(this.goodsAndServices.Health+number<=this.goodsAndServices.HealthLimit){
+                if (this.goodsAndServices.Health + number <= this.goodsAndServices.HealthLimit) {
                     this.goodsAndServices.Health += number;
                 }
-                else{
-                  this.goodsAndServices.Health=this.goodsAndServices.HealthLimit;  
-                }  
+                else {
+                    this.goodsAndServices.Health = this.goodsAndServices.HealthLimit;
+                }
                 break;
             case 'Education':
-                if(this.goodsAndServices.Education+number<=this.goodsAndServices.EducationLimit){
+                if (this.goodsAndServices.Education + number <= this.goodsAndServices.EducationLimit) {
                     this.goodsAndServices.Education += number;
                 }
-                else{
-                   this.goodsAndServices.Education=this.goodsAndServices.EducationLimit; 
+                else {
+                    this.goodsAndServices.Education = this.goodsAndServices.EducationLimit;
                 }
                 break;
             case 'Media':
@@ -158,10 +158,10 @@ export class CapitalistClass extends EventEmitter {
             Health: 10,
             Education: 10,
             Influence: 1,
-            FoodLimit:8,
-            LuxuryLimit:12,
-            HealthLimit:12,
-            EducationLimit:12,
+            FoodLimit: 8,
+            LuxuryLimit: 12,
+            HealthLimit: 12,
+            EducationLimit: 12,
         };
         this.goodsPrices = {
             Food: 12,
@@ -189,8 +189,8 @@ export class CapitalistClass extends EventEmitter {
         }
     }
     Adjustwages(thiscompany: CapitalistCompany, price: number) {
-        if(price>this.Company.filter(company => company === thiscompany)[0].wages.level){
-            this.Company.filter(company => company === thiscompany)[0].Commit=true;
+        if (price > this.Company.filter(company => company === thiscompany)[0].wages.level) {
+            this.Company.filter(company => company === thiscompany)[0].Commit = true;
         }
         this.Company.filter(company => company === thiscompany)[0].wages.level = price;
         this.emit("update");
@@ -281,33 +281,77 @@ export class CapitalistClass extends EventEmitter {
         this.Revenue += item.price;
         this.emit("update");
     }
-    GiveBonus(thiscompany:CapitalistCompany){
-        this.Company.filter(company => company === thiscompany)[0].Commit=true;
-        if(this.Revenue>5){
-            this.Revenue-=5;
+    GiveBonus(thiscompany: CapitalistCompany) {
+        this.Company.filter(company => company === thiscompany)[0].Commit = true;
+        if (this.Revenue > 5) {
+            this.Revenue -= 5;
             WorkerClass.getInstance().addincome(5);
         }
-        else{
-            this.Capitalist-=(5-this.Revenue);
-            this.Revenue=0;
+        else {
+            this.Capitalist -= (5 - this.Revenue);
+            this.Revenue = 0;
             WorkerClass.getInstance().addincome(5);
         }
         this.emit("update");
     }
-    BuyStorage(item:keyof CapitalistGoodsAndServices){
-        if(item==='Food'){
-            this.goodsAndServices.FoodLimit+=8;
+    BuyStorage(item: keyof CapitalistGoodsAndServices) {
+        if (item === 'Food') {
+            this.goodsAndServices.FoodLimit += 8;
         }
-        else if(item==='Education'){
-            this.goodsAndServices.EducationLimit+=12;
+        else if (item === 'Education') {
+            this.goodsAndServices.EducationLimit += 12;
         }
-        else if(item==='Health'){
-            this.goodsAndServices.HealthLimit+=12;
+        else if (item === 'Health') {
+            this.goodsAndServices.HealthLimit += 12;
         }
-        else if(item==='Luxury'){
-            this.goodsAndServices.LuxuryLimit+=12;
+        else if (item === 'Luxury') {
+            this.goodsAndServices.LuxuryLimit += 12;
         }
         this.emit("update");
+    }
+    Producrion() {
+        this.Company.map((company) => {
+            if (company.Commit) {
+                if (company.wages.level === 3) {
+                    company.Commit = false;
+                }
+            }
+            if (!company.Commit && working(company)) {
+                Board.getInstance().addPublicService(company.industry, company.goodsProduced);
+                const wageLevelValue = company.wages[company.wages.level as 1 | 2 | 3];
+                if (this.Revenue >= wageLevelValue) {
+                    this.Revenue -= wageLevelValue;
+                    WorkerClass.getInstance().addincome(wageLevelValue);
+                }
+                else if (this.Revenue + this.Capitalist >= wageLevelValue) {
+                    this.Capitalist -= (wageLevelValue - this.Revenue);
+                    this.Revenue = 0;
+                    WorkerClass.getInstance().addincome(wageLevelValue);
+                }
+                else {
+                    this.loan++;
+                    this.Capitalist += 50;
+                    this.Capitalist -= (wageLevelValue - this.Revenue);
+                    this.Revenue = 0;
+                    WorkerClass.getInstance().addincome(wageLevelValue);
+                }
+                console.log(company.name,wageLevelValue);
+            }
+            if (company.Commit) {
+                company.Commit = false;
+                WorkerClass.getInstance().Buying(1, 'Influence');
+            }
+        }
+        );
     }
 }
-
+function working(company: Company): boolean {
+    const workers = company.workingworkers;
+    let Workers = 0, skilledWorker = 0;
+    for (let i = 0; i < workers.length; i++) {
+        if (workers[i].skill === company.industry) {
+            skilledWorker++;
+        }
+    }
+    return company.workingworkers.length === company.requiredWorkers && skilledWorker >= company.skilledworker;
+}

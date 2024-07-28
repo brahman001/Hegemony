@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
 import { Company } from "./company";
 import { parse, stringify } from 'flatted';
-import { CapitalistClass,CapitalistGoodsAndServices} from "./Capitalist class";
+import { CapitalistClass, CapitalistGoodsAndServices } from "./Capitalist class";
 export interface Policy {
     Fiscal: string;
     Labor: string;
@@ -198,19 +198,12 @@ export class Board extends EventEmitter {
         this.StateCompany = [];
         this.setcompany2p();
     };
-    setPolicy(policyType: keyof Policy, policyValue: string): void {
-        if (this.Policy.hasOwnProperty(policyType)) {
-            this.Policy[policyType] = policyValue;
-        } else {
-            throw new Error(`Policy type ${policyType} does not exist`);
-        }
-    }
     updateStateTreasury(amount: number): void {
         this.StateTreasury += amount;
     }
     addPublicService(industry: String, number: number) {
         switch (industry) {
-            case 'Healthcare':
+            case 'Heathlcare':
             case 'Health':
                 this.goodsAndServices.Health += number;
                 break;
@@ -222,12 +215,11 @@ export class Board extends EventEmitter {
                 this.goodsAndServices.Influence += number;
                 break;
             default:
-                throw new Error(`Industry type ${industry} does not exist`);
         }
     }
     reflashExport(): void {
         this.Export = Exportcards[Math.floor(Math.random() * Exportcards.length)],
-        this.emit('update');
+            this.emit('update');
     }
     getinfo() {
         return {
@@ -439,15 +431,17 @@ export class Board extends EventEmitter {
                         'C': 1
                     };
                     Board.getInstance().getinfo().companys.forEach(company => {
-                        if (mapping[policy as keyof PolicyMap] !== company.wages.level) {
+                        if (!company.Commit && mapping[policy as keyof PolicyMap] > company.wages.level) {
                             company.wages.level = mapping[policy as keyof PolicyMap];
                         }
                     });
+
                     CapitalistClass.getInstance().getinfo().companys.forEach(company => {
-                        if (mapping[policy as keyof PolicyMap] !== company.wages.level) {
+                        if (!company.Commit && mapping[policy as keyof PolicyMap] > company.wages.level) {
                             company.wages.level = mapping[policy as keyof PolicyMap];
                         }
                     });
+
                     this.emit("update");
                     break;
                 case 'Taxation':
@@ -569,6 +563,34 @@ export class Board extends EventEmitter {
             return 10;
         }
         return 0;
+    }
+    Producrion() {
+        this.StateCompany.map((company) => {
+            if (company.Commit) {
+                if (company.wages.level === 3) {
+                    company.Commit = false;
+                }
+            }
+            if (!company.Commit && working(company)) {
+                Board.getInstance().addPublicService(company.industry, company.goodsProduced);
+                const wageLevelValue = company.wages[company.wages.level as 1 | 2 | 3];
+                if (this.StateTreasury >= wageLevelValue) {
+                    Board.getInstance().updateStateTreasury(-wageLevelValue);
+                    WorkerClass.getInstance().addincome(wageLevelValue);
+                }
+                else {
+                    this.loan++;
+                    Board.getInstance().updateStateTreasury(50);
+                    Board.getInstance().updateStateTreasury(-wageLevelValue);
+                    WorkerClass.getInstance().addincome(wageLevelValue);
+                }
+                console.log(company.name,wageLevelValue);
+            }
+            if(company.Commit){
+                company.Commit=false;
+                WorkerClass.getInstance().Buying(1,'Influence');
+            }
+        });
     }
 }
 
@@ -772,3 +794,13 @@ const Exportcards: Export[] = [
 
 ]
 
+function working(company: Company): boolean {
+    const workers = company.workingworkers;
+    let Workers = 0, skilledWorker = 0;
+    for (let i = 0; i < workers.length; i++) {
+        if (workers[i].skill === company.industry) {
+            skilledWorker++;
+        }
+    }
+    return company.workingworkers.length === company.requiredWorkers && skilledWorker >= company.skilledworker;
+}
