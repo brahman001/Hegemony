@@ -381,6 +381,14 @@ export class WorkerClass extends EventEmitter {
             }
         }
     }
+    getUnion() {
+        let trueCount = 0;
+        for (let key in this.tradeUnions) {
+            if (this.tradeUnions[key as keyof TradeUnions] === true) {
+                trueCount++;
+            }
+        } return trueCount;
+    }
     scroingPhase() {
         let trueCount = 0;
         for (let key in this.tradeUnions) {

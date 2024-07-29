@@ -657,6 +657,26 @@ export class Board extends EventEmitter {
         return 0;
     }
     Production() {
+        if(this.DemonStration===true){
+            let sum = 0;
+            Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+              sum += company.requiredWorkers,
+              sum -= company.workingworkers.length
+            ))
+            CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
+              sum += company.requiredWorkers,
+              sum -= company.workingworkers.length
+            ))
+            if(sum+2>this.unempolyment.length){
+                this.DemonStration=false;
+            }
+            else{
+                CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score-this.unempolyment.length+sum-WorkerClass.getInstance().getUnion())
+                if(CapitalistClass.getInstance().getinfo().Score<0){
+                    CapitalistClass.getInstance().setScore(0);
+                }
+            }
+        }
         this.StateCompany.map((company) => {
             if (company.Strike) {
                 if (company.wages.level === 3) {
