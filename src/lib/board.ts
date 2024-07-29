@@ -150,6 +150,7 @@ export class Board extends EventEmitter {
         this.StateCompany = data.StateCompany;
         this.Votingbag = data.Votingbag;
         this.unempolyment = data.unempolyment;
+        this.Votingresult = data.Votingresult;
     }
     Initialization2p() {
         this.Votingresult = {
@@ -341,7 +342,6 @@ export class Board extends EventEmitter {
             if (this.votingRules[currentGrade] && this.votingRules[currentGrade].includes(votingAim) && !this.PolicyVoting[policy]) {
                 this.PolicyVoting[policy] = votingAim;
                 this.policyVotingone = policy;
-                this.Votingbag.agree.push(classname);
                 this.emit('update');
                 onSuccess();
             } else {
@@ -401,7 +401,6 @@ export class Board extends EventEmitter {
     Voting2(workerInfluence: number, capitalistInfluence: number) {
         let totalAgreeInfluence = 0;
         let totalDisagreeInfluence = 0;
-
         if (this.Votingbag.agree.filter(member => member instanceof WorkerClass).length > 0) {
             totalAgreeInfluence += workerInfluence + this.Votingresult.Workerclass;
         } else {
@@ -418,7 +417,100 @@ export class Board extends EventEmitter {
             this.Policy[this.policyVotingone] = this.PolicyVoting[this.policyVotingone];
             this.PolicyVoting[this.policyVotingone] = '';
             this.Votingbag.Capitalistclass += this.Votingresult.Capitalistclass;
+            switch (this.policyVotingone) {
+                case 'Fiscal':
+                    Board.getInstance().setcompany2p();
+                    break;
+                case 'Labor':
+                    const policy = this.Policy[this.policyVotingone];
+                    const mapping: PolicyMap = {
+                        'A': 3,
+                        'B': 2,
+                        'C': 1
+                    };
+                    Board.getInstance().getinfo().companys.forEach(company => {
+                        if (!company.Commit && mapping[policy as keyof PolicyMap] > company.wages.level) {
+                            company.wages.level = mapping[policy as keyof PolicyMap];
+                        }
+                    });
 
+                    CapitalistClass.getInstance().getinfo().companys.forEach(company => {
+                        if (!company.Commit && mapping[policy as keyof PolicyMap] > company.wages.level) {
+                            company.wages.level = mapping[policy as keyof PolicyMap];
+                        }
+                    });
+
+                    this.emit("update");
+                    break;
+                case 'Taxation':
+                case 'Health':
+                case 'Education':
+                case 'Foreign':
+                case 'Immigration':
+                    break;
+            }
+
+            if (this.Votingbag.agree.length > 0) {
+                if (this.Votingbag.agree[0] instanceof WorkerClass) {
+                    WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 3);
+                    if (this.Votingbag.agree.length > 1) {
+                        CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score + 1);
+                    }
+                } else {
+                    CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score + 3);
+                    if (this.Votingbag.agree.length > 1) {
+                        WorkerClass.getInstance().setScore(WorkerClass.getInstance().getinfo().score + 1);
+                    }
+                }
+            }
+
+            this.Votingbag.disagree.forEach(member => {
+                if (member instanceof WorkerClass) {
+                    this.Votingbag.Workerclass++;
+                } else if (member instanceof CapitalistClass) {
+                    this.Votingbag.Capitalistclass++;
+                }
+            });
+
+        } else {
+            this.Votingbag.Workerclass += this.Votingresult.Workerclass;
+            this.PolicyVoting[this.policyVotingone] = '';
+            console.log(this.PolicyVoting[this.policyVotingone]);
+            this.Votingbag.agree.forEach(member => {
+                if (member instanceof WorkerClass) {
+                    this.Votingbag.Workerclass++;
+                } else if (member instanceof CapitalistClass) {
+                    this.Votingbag.Capitalistclass++;
+                }
+            });
+        }
+
+        this.Votingbag.agree = [];
+        this.Votingbag.disagree = [];
+        this.Votingresult.Capitalistclass = 0;
+        this.Votingresult.Workerclass = 0;
+        this.emit("update");
+    }
+    Voting3(workerInfluence: number, capitalistInfluence: number, votingname: String) {
+        let totalAgreeInfluence = 0;
+        let totalDisagreeInfluence = 0;
+        this.policyVotingone = votingname as keyof Policy;
+        if (this.Votingbag.agree.filter(member => member instanceof WorkerClass).length > 0) {
+            totalAgreeInfluence += workerInfluence + this.Votingresult.Workerclass;
+        } else {
+            totalDisagreeInfluence += workerInfluence + this.Votingresult.Workerclass;
+        }
+
+        if (this.Votingbag.agree.filter(member => member instanceof CapitalistClass).length > 0) {
+            totalAgreeInfluence += capitalistInfluence + this.Votingresult.Capitalistclass;
+        } else {
+            totalDisagreeInfluence += capitalistInfluence + this.Votingresult.Capitalistclass;
+        }
+
+        if (totalAgreeInfluence >= totalDisagreeInfluence) {
+            this.Policy[this.policyVotingone] = this.PolicyVoting[this.policyVotingone];
+            this.PolicyVoting[this.policyVotingone] = '';
+            this.Votingbag.Capitalistclass += this.Votingresult.Capitalistclass;
             switch (this.policyVotingone) {
                 case 'Fiscal':
                     Board.getInstance().setcompany2p();
@@ -564,14 +656,14 @@ export class Board extends EventEmitter {
         }
         return 0;
     }
-    Producrion() {
+    Production() {
         this.StateCompany.map((company) => {
-            if (company.Commit) {
+            if (company.Strike) {
                 if (company.wages.level === 3) {
-                    company.Commit = false;
+                    company.Strike = false;
                 }
             }
-            if (!company.Commit && working(company)) {
+            if (!company.Strike && working(company)) {
                 Board.getInstance().addPublicService(company.industry, company.goodsProduced);
                 const wageLevelValue = company.wages[company.wages.level as 1 | 2 | 3];
                 if (this.StateTreasury >= wageLevelValue) {
@@ -584,13 +676,71 @@ export class Board extends EventEmitter {
                     Board.getInstance().updateStateTreasury(-wageLevelValue);
                     WorkerClass.getInstance().addincome(wageLevelValue);
                 }
-                console.log(company.name,wageLevelValue);
+                console.log(company.name, wageLevelValue);
             }
-            if(company.Commit){
-                company.Commit=false;
-                WorkerClass.getInstance().Buying(1,'Influence');
+            if (company.Strike) {
+                company.Strike = false;
+                WorkerClass.getInstance().Buying(1, 'Influence');
             }
         });
+    }
+    checkIMF() {
+        if (this.Policy.Fiscal === 'A') {
+            if (this.loan > 1) {
+                this.PolicyVoting = {
+                    Fiscal: 'C',
+                    Labor: 'C',
+                    Taxation: 'A',
+                    Health: 'B',
+                    Education: 'C',
+                    Foreign: 'B',
+                    Immigration: 'B',
+                }
+                this.setcompany2p();
+                Board.getInstance().getinfo().companys.forEach(company => {
+                    if (!company.Commit) {
+                        company.wages.level = 1;
+                    }
+                });
+
+                CapitalistClass.getInstance().getinfo().companys.forEach(company => {
+                    if (!company.Commit) {
+                        company.wages.level = 1;
+                    }
+                });
+            }
+        }
+        else {
+            if (this.loan > 2) {
+                this.PolicyVoting = {
+                    Fiscal: 'C',
+                    Labor: 'C',
+                    Taxation: 'A',
+                    Health: 'B',
+                    Education: 'C',
+                    Foreign: 'B',
+                    Immigration: 'B',
+                }
+                this.setcompany2p();
+                Board.getInstance().getinfo().companys.forEach(company => {
+                    if (!company.Commit) {
+                        company.wages.level = 1;
+                    }
+                });
+
+                CapitalistClass.getInstance().getinfo().companys.forEach(company => {
+                    if (!company.Commit) {
+                        company.wages.level = 1;
+                    }
+                });
+            }
+        }
+    }
+    perparation() {
+        this.StateCompany.map((company) => { company.Commit = false });
+        this.StateTreasury -= (this.loan * 5);
+        this.setBusinessDeal;
+        this.Export = this.Export = Exportcards[Math.floor(Math.random() * Exportcards.length)];
     }
 }
 

@@ -212,7 +212,7 @@ export class WorkerClass extends EventEmitter {
                 if (goods.Health >= populationLevel) {
                     goods.Health -= populationLevel;
                     this.addWorker('unskill', null);
-                  
+
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Health`;
@@ -225,7 +225,7 @@ export class WorkerClass extends EventEmitter {
                     this.addWorker('unskill', null);
                     this.score += 2;
                     this.setProsperity(this.prosperity + 1);
-                
+
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Health`;
@@ -236,7 +236,7 @@ export class WorkerClass extends EventEmitter {
                 if (goods.Luxury >= populationLevel) {
                     goods.Luxury -= populationLevel;
                     this.setProsperity(this.prosperity + 1);
-             
+
                     this.emit('update');
                 } else {
                     errorMessage = `没有足够的 Luxury`;
@@ -282,6 +282,8 @@ export class WorkerClass extends EventEmitter {
     }
     addunion(union: keyof Population["Natureofposition"]) {
         this.tradeUnions[union as keyof TradeUnions] = true;
+        this.score += 2;
+        this.goodsAndServices.Influence += 1;
         this.emit('update');
     }
     updateWorker(worker: Worker, newLocation: Company) {
@@ -298,6 +300,111 @@ export class WorkerClass extends EventEmitter {
         worker.location = newLocation;
         newLocation.workingworkers.push(worker);
         this.emit('update');
+    }
+    tax() {
+        if (Board.getInstance().getinfo().Policy.Labor === 'A') {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                if (this.income < (7 * this.population.population_level)) {
+                    this.loan += ((this.income - (7 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (7 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (7 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(7 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                if (this.income < (6 * this.population.population_level)) {
+                    this.loan += ((this.income - (6 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (6 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (7 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(6 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                if (this.income < (5 * this.population.population_level)) {
+                    this.loan += ((this.income - (5 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (5 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (7 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(5 * this.population.population_level);
+            }
+        }
+        else if (Board.getInstance().getinfo().Policy.Labor === 'B') {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                if (this.income < (4 * this.population.population_level)) {
+                    this.loan += ((this.income - (4 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (4 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (4 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(4 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                if (this.income < (4 * this.population.population_level)) {
+                    this.loan += ((this.income - (4 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (4 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (7 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(4 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                if (this.income < (4 * this.population.population_level)) {
+                    this.loan += ((this.income - (4 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (4 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (7 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(4 * this.population.population_level);
+            }
+        }
+        else if (Board.getInstance().getinfo().Policy.Labor === 'C') {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                if (this.income < (1 * this.population.population_level)) {
+                    this.loan += ((this.income - (1 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (1 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (1 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(1 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                if (this.income < (2 * this.population.population_level)) {
+                    this.loan += ((this.income - (2 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (2 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (2 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(2 * this.population.population_level);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                if (this.income < (3 * this.population.population_level)) {
+                    this.loan += ((this.income - (3 * this.population.population_level)) % 50 + 1);
+                    this.income += ((this.income - (3 * this.population.population_level)) % 50 + 1) * 50;
+                }
+                this.income -= (3 * this.population.population_level);
+                Board.getInstance().updateStateTreasury(3 * this.population.population_level);
+            }
+        }
+    }
+    scroingPhase() {
+        let trueCount = 0;
+        for (let key in this.tradeUnions) {
+            if (this.tradeUnions[key as keyof TradeUnions] === true) {
+                trueCount++;
+            }
+        }
+        this.score += trueCount * 2;
+        this.goodsAndServices.Influence += trueCount;
+    }
+    perparation() {
+        if (this.prosperity >= 1) {
+            this.prosperity--;
+        }
+        if (Board.getInstance().getinfo().Policy.Immigration === 'A') {
+
+        }
+        else if (Board.getInstance().getinfo().Policy.Immigration === 'A') {
+            this.addWorker('unskill', null);
+        }
+        else {
+            this.addWorker('unskill', null);
+            this.addWorker('unskill', null);
+        }
     }
 }
 

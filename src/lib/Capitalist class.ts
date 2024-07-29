@@ -17,6 +17,23 @@ export interface CapitalistGoodsAndServicesLimits extends CapitalistGoodsAndServ
     HealthLimit: number;
     EducationLimit: number;
 }
+const levels = [
+    { min: 0, max: 10, level: 1 },
+    { min: 11, max: 25, level: 2 },
+    { min: 26, max: 50, level: 3 },
+    { min: 31, max: 40, level: 4 },
+    { min: 41, max: 50, level: 5 },
+    { min: 51, max: 60, level: 6 },
+    { min: 61, max: 70, level: 7 },
+    { min: 71, max: 80, level: 8 },
+    { min: 81, max: 90, level: 9 },
+    { min: 91, max: 100, level: 10 },
+    { min: 101, max: 110, level: 11 },
+    { min: 111, max: 120, level: 12 },
+    { min: 121, max: 130, level: 13 },
+    { min: 131, max: 140, level: 14 },
+    { min: 141, max: 150, level: 15 },
+];
 export class CapitalistClass extends EventEmitter {
 
     private static instance: CapitalistClass;
@@ -28,9 +45,11 @@ export class CapitalistClass extends EventEmitter {
     private loan: number;
     private goodsPrices: { [key in keyof CapitalistGoodsAndServices]: number };
     private Market: CapitalistCompany[];
+    private highestCapitalist: number;
 
     private constructor() {
         super();
+        this.highestCapitalist = 0;
         this.Company = [];
         this.Revenue = 0;
         this.Capitalist = 120;
@@ -77,12 +96,14 @@ export class CapitalistClass extends EventEmitter {
         return CapitalistClass.instance;
     }
     SetCapitalistClass(data: CapitalistClass) {
+        this.highestCapitalist = data.highestCapitalist;
         this.Company = data.Company;
         this.Revenue = data.Revenue;
         this.Capitalist = data.Capitalist;
         this.goodsAndServices = data.goodsAndServices;
         this.score = data.score;
         this.loan = data.loan;
+        this.goodsPrices = data.goodsPrices;
         this.Market = data.Market;
     }
     setScore(newScore: number): void {
@@ -94,8 +115,8 @@ export class CapitalistClass extends EventEmitter {
             case 'Food':
                 if (this.goodsAndServices.Food + number <= this.goodsAndServices.FoodLimit) {
                     this.goodsAndServices.Food += number;
-                }else{
-                   this.goodsAndServices.Food = this.goodsAndServices.FoodLimit; 
+                } else {
+                    this.goodsAndServices.Food = this.goodsAndServices.FoodLimit;
                 }
                 break;
             case 'Luxury':
@@ -145,6 +166,7 @@ export class CapitalistClass extends EventEmitter {
         };
     }
     Initialization() {
+        this.highestCapitalist = 0;
         this.Company = [];
         this.Company.push(CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "UNIVERSITY_basic") as CapitalistCompany);
         this.Company.push(CapitalistCompanys.find(CapitalistCompany => CapitalistCompany.name === "HOSPITAL_basic") as CapitalistCompany);
@@ -187,6 +209,7 @@ export class CapitalistClass extends EventEmitter {
             this.goodsPrices[item] = price;
             this.emit('priceChange', { item, price });
         }
+        this.emit("update");
     }
     Adjustwages(thiscompany: CapitalistCompany, price: number) {
         if (price > this.Company.filter(company => company === thiscompany)[0].wages.level) {
@@ -309,14 +332,14 @@ export class CapitalistClass extends EventEmitter {
         }
         this.emit("update");
     }
-    Producrion() {
+    Production() {
         this.Company.map((company) => {
-            if (company.Commit) {
+            if (company.Strike) {
                 if (company.wages.level === 3) {
-                    company.Commit = false;
+                    company.Strike = false;
                 }
             }
-            if (!company.Commit && working(company)) {
+            if (!company.Strike && working(company)) {
                 Board.getInstance().addPublicService(company.industry, company.goodsProduced);
                 const wageLevelValue = company.wages[company.wages.level as 1 | 2 | 3];
                 if (this.Revenue >= wageLevelValue) {
@@ -335,14 +358,209 @@ export class CapitalistClass extends EventEmitter {
                     this.Revenue = 0;
                     WorkerClass.getInstance().addincome(wageLevelValue);
                 }
-                console.log(company.name,wageLevelValue);
+                console.log(company.name, wageLevelValue);
             }
-            if (company.Commit) {
-                company.Commit = false;
+            if (company.Strike) {
+                company.Strike = false;
                 WorkerClass.getInstance().Buying(1, 'Influence');
             }
         }
         );
+    }
+    tax() {
+        let tax = 1;
+        let count = 0;
+
+        for (let i = 0; i < this.Company.length; i++) {
+            if (working(this.Company[i])) {
+                count++;
+            }
+        }
+        if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+            tax = 3;
+            if (Board.getInstance().getinfo().Policy.Health === 'A') {
+                tax += 4;
+            }
+            else if (Board.getInstance().getinfo().Policy.Health === 'B') {
+                tax += 2;
+            }
+            if (Board.getInstance().getinfo().Policy.Education === 'A') {
+                tax += 4;
+            }
+            else if (Board.getInstance().getinfo().Policy.Education === 'B') {
+                tax += 2;
+            }
+        }
+        else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+            tax = 2;
+            if (Board.getInstance().getinfo().Policy.Health === 'A') {
+                tax += 2;
+            }
+            else if (Board.getInstance().getinfo().Policy.Health === 'B') {
+                tax += 1;
+            }
+            if (Board.getInstance().getinfo().Policy.Education === 'A') {
+                tax += 2;
+            }
+            else if (Board.getInstance().getinfo().Policy.Education === 'B') {
+                tax += 1;
+            }
+        }
+        else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+            tax = 1;
+        }
+        console.log(Company.length, count);
+        if (this.Revenue >= tax * count) {
+            this.Revenue -= tax * count;
+            Board.getInstance().updateStateTreasury(tax * count);
+        }
+        else if (this.Revenue + this.Capitalist >= tax * count) {
+            this.Capitalist -= (tax * count - this.Revenue);
+            Board.getInstance().updateStateTreasury(tax * count);
+        }
+        else if (this.Revenue + this.Capitalist < tax * count) {
+            this.loan += ((this.Revenue + this.Capitalist - tax * count) % 50 + 1);
+            this.Capitalist += ((this.Revenue + this.Capitalist - tax * count) % 50 + 1) * 50;
+            this.Capitalist -= (tax * count - this.Revenue);
+            Board.getInstance().updateStateTreasury(tax * count);
+        }
+
+        if (this.Revenue < 5) {
+
+        }
+        else if (this.Revenue <= 9) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 1
+                Board.getInstance().updateStateTreasury(1);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 2
+                Board.getInstance().updateStateTreasury(2);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 2
+                Board.getInstance().updateStateTreasury(2);
+            }
+        }
+        else if (this.Revenue <= 24) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 5;
+                Board.getInstance().updateStateTreasury(5);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 5;
+                Board.getInstance().updateStateTreasury(5);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 4;
+                Board.getInstance().updateStateTreasury(4);
+            }
+        } else if (this.Revenue <= 49) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 12;
+                Board.getInstance().updateStateTreasury(12);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 10;
+                Board.getInstance().updateStateTreasury(10);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 7;
+                Board.getInstance().updateStateTreasury(7);
+            }
+        }
+        else if (this.Revenue <= 99) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 24;
+                Board.getInstance().updateStateTreasury(24);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 15;
+                Board.getInstance().updateStateTreasury(15);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 10;
+                Board.getInstance().updateStateTreasury(10);
+            }
+        }
+        else if (this.Revenue <= 199) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 40;
+                Board.getInstance().updateStateTreasury(40);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 30;
+                Board.getInstance().updateStateTreasury(30);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 20;
+                Board.getInstance().updateStateTreasury(20);
+            }
+        }
+        else if (this.Revenue <= 299) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 100;
+                Board.getInstance().updateStateTreasury(100);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 100;
+                Board.getInstance().updateStateTreasury(100);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 100;
+                Board.getInstance().updateStateTreasury(100);
+            }
+        } else if (this.Revenue >= 300) {
+            if (Board.getInstance().getinfo().Policy.Taxation === 'A') {
+                this.Revenue -= 160;
+                Board.getInstance().updateStateTreasury(160);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'B') {
+                this.Revenue -= 120;
+                Board.getInstance().updateStateTreasury(120);
+            }
+            else if (Board.getInstance().getinfo().Policy.Taxation === 'C') {
+                this.Revenue -= 60;
+                Board.getInstance().updateStateTreasury(60);
+            }
+
+        }
+    }
+    payoffloan() {
+        this.Capitalist -= 50;
+        this.loan--;
+        this.emit("update")
+    }
+    scroingPhase() {
+        this.Capitalist += this.Revenue;
+        this.Revenue = 0;
+        let level = 0;
+        for (let i = 0; i < levels.length; i++) {
+            if (this.Capitalist >= levels[i].min && this.Capitalist <= levels[i].max) {
+                level = levels[i].level;
+            }
+        }
+        if (level > this.highestCapitalist) {
+            this.score += (level - this.highestCapitalist) * 3;
+            this.score += level;
+            this.highestCapitalist = level;
+        }
+        else {
+            this.score += level;
+        }
+    }
+    perparation() {
+        this.Company.map((company) => {company.Commit=false});
+        this.Capitalist-=(this.loan*5);
+        this.Market = [];
+        let i = 0;
+        while (i < 5) {
+            const randomIndex = Math.floor(Math.random() * CapitalistCompanys.length);
+            if (this.Market.filter(Company => Company === CapitalistCompanys[randomIndex]).length === 0 && this.Company.filter(Company => Company === CapitalistCompanys[randomIndex])) {
+                this.Market.push(CapitalistCompanys[randomIndex]);
+                i++;
+            }
+        }
     }
 }
 function working(company: Company): boolean {

@@ -8,13 +8,12 @@ import { Board, Policy, StategoodsAndServices, Item, Export, ExportKeys } from '
 import Image from 'next/image'
 import { Company, CapitalistCompany } from '@/lib/company';
 import { parse, stringify } from 'flatted';
-import { comma } from 'postcss/lib/list';
 
 interface GameState {
   nowclass: WorkerClass | CapitalistClass;
   currentTurn: number;
   currentRound: number;
-  phase: 'Action' | 'Production' | 'Preparation Phase';
+  phase: 'Action' | 'Production' | 'Preparation Phase'|'End Phase';
   maxRounds: number;
   maxTurns: number;
 }
@@ -62,10 +61,13 @@ export default function GameRun() {
   });
   const [showInitializationModal, setInitializationModal] = useState(false);
   const [showEatingModal, setEatingModal] = useState(false);
+  const [showVotingModal, setVotingmodel] = useState<number>(0);
   const [usedBasicActions, setUsedBasicActions] = useState(false);
   const [usedfreeActions, setUsedFreeActions] = useState(false);
-  const [inputValue, setInputValue] = useState<number | string>('');
-  const [submitcondition, setsubmitcondition] = useState(false);
+  const [inputValue, setInputValue] = useState<number | undefined>(undefined);
+  const [workerInfluence, setWorkerInfluence] = useState<number | null>(null);
+  const [capitalistInfluence, setCapitalistInfluence] = useState<number | null>(null);
+  const [votingName, setVotingName] = useState<String | undefined>(undefined);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -151,26 +153,24 @@ export default function GameRun() {
     };
   }, []);
   const handleNextRound = () => {
-    if (gameState.currentRound === 1 && gameState.currentRound <= 5 && gameState.nowclass instanceof CapitalistClass) {
+    if (gameState.currentRound === 1 && gameState.currentTurn <2 && gameState.nowclass instanceof CapitalistClass) {
       setGameState(prev => ({
         ...prev,
         phase: 'Production'
       }));
-      Production1();
     }
-    else if (gameState.currentRound === 5 && gameState.currentRound === 5 && gameState.nowclass instanceof CapitalistClass) {
-
+    else if (gameState.currentRound === 1 && gameState.currentTurn === 2 && gameState.nowclass instanceof CapitalistClass) {
+      setGameState(prev => ({
+        ...prev,
+        phase: 'End Phase'
+      }));
+      console.log("jieshu")
     } else {
-
       setUsedFreeActions(false);
       setUsedBasicActions(false);
       setGameState(prev => {
         const nextClass = toggleNowclass(prev.nowclass);
         const isCapitalistToWorker = prev.nowclass instanceof CapitalistClass && nextClass instanceof WorkerClass;
-        const nextTurn = prev.currentTurn + (isCapitalistToWorker ? 1 : 0);
-
-        const nextPhase = nextTurn >= prev.maxTurns ? 'Production' : prev.phase;
-
         return {
           ...prev,
           nowclass: nextClass,
@@ -221,13 +221,62 @@ export default function GameRun() {
     });
   }
   const Production1 = () => {
-    Board.getInstance().Producrion();
-    CapitalistClass.getInstance().Producrion();
+    Board.getInstance().Production();
+    CapitalistClass.getInstance().Production();
     setEatingModal(true);
   }
   const Production2 = () => {
-   //纳税然后触发准备阶段
+    Board.getInstance().checkIMF();
+    CapitalistClass.getInstance().tax();
+    WorkerClass.getInstance().tax();
+    RenderVotingOptions();
+
   }
+  const perparation = () => {
+    Board.getInstance().perparation();
+    CapitalistClass.getInstance().perparation();
+    WorkerClass.getInstance().perparation();
+    setGameState(prev => ({
+      ...prev,
+      nowclass: WorkerClass.getInstance(),
+      phase: 'Action',
+      currentRound: 1,
+      currentTurn: prev.currentTurn + 1, // Corrected this line
+    }));
+    setUsedFreeActions(false);
+    setUsedBasicActions(false);
+  }
+  const scroingPhase = () => {
+    CapitalistClass.getInstance().scroingPhase();
+    WorkerClass.getInstance().scroingPhase();
+    perparation();
+  }
+  const RenderVotingOptions = () => {
+    const policyVoting = Board.getInstance().getinfo().PolicyVoting;
+    const firstNonEmptyPolicyEntry = Object.entries(policyVoting).find(([key, value]) => value !== '');
+    console.log(firstNonEmptyPolicyEntry);
+    let thisVotingName;
+    if (firstNonEmptyPolicyEntry !== undefined) {
+      thisVotingName = firstNonEmptyPolicyEntry[0];
+    }
+    else {
+      thisVotingName = undefined;
+    }
+    console.log(thisVotingName);
+    if (thisVotingName && thisVotingName !== votingName) {
+      setVotingName(thisVotingName);
+      setVotingmodel(1);
+    } else if (thisVotingName === undefined) {
+      setVotingName(undefined);
+      setVotingmodel(0);
+      scroingPhase();
+    }
+
+    return (
+      <div>
+      </div>
+    );
+  };
   const renderBuyingOptions = () => {
     return (
       <div>
@@ -280,7 +329,12 @@ export default function GameRun() {
     console.log("capitalistInfo:", capitalistInfo);
     console.log("boardInfo:", boardInfo);
     console.log("numberValue:", numberValue);
-
+    if (key === 'Influence-WorkerClass') {
+      isValid = !isNaN(numberValue) && numberValue >= 0 && numberValue <= workerInfo.goodsAndServices.Influence;
+    }
+    else if (key === 'Influence-Capitalistclass') {
+      isValid = !isNaN(numberValue) && numberValue >= 0 && numberValue <= capitalistInfo.goodsAndServices.Influence;
+    }
     if (key === 'Import') {
       const itemPrice = Board.getInstance().goodsPrices('Food');
       isValid = !isNaN(numberValue) && numberValue > 0 && numberValue <= workerInfo.population.population_level &&
@@ -293,12 +347,15 @@ export default function GameRun() {
         workerInfo.income >= itemPrice * numberValue;
     }
     if (isValid || value === '') {
+      if (key === 'Influence-WorkerClass') {
+        setWorkerInfluence(numberValue);
+      } else if (key === 'Influence-Capitalistclass') {
+        setCapitalistInfluence(numberValue);
+      }
       setInputValue(numberValue);
-      console.log("set", { numberValue });
+      console.log("set" + { numberValue });
     }
-    setsubmitcondition(isValid);
   };
-
   const handleBuyingSubmit = (event: React.MouseEvent<HTMLButtonElement>, source: string) => {
     if (typeof inputValue === 'number') {
       if (source === 'CapitalistClass') {
@@ -325,7 +382,7 @@ export default function GameRun() {
       <button onClick={updateData}>information</button>
     </div>
     {DataTable(data)}
-    {gameState.phase !== 'Production' && <ActionToggle
+    {gameState.phase === 'Action' && <ActionToggle
       nowclass={gameState.nowclass}
       onActionComplete={() => handleNextRound()}
       usedBasicActions={usedBasicActions}
@@ -333,6 +390,7 @@ export default function GameRun() {
       setBasicAction={() => setUsedBasicActions(true)}
       setfreeAction={() => setUsedFreeActions(true)}
     />}
+    <button onClick={Production1}>Production</button>
     {showInitializationModal && (
       <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
         <div className="modal-dialog">
@@ -358,16 +416,142 @@ export default function GameRun() {
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">fininsh worker </h5>
+              <h5 className="modal-title">fininsh worker</h5>
             </div>
             <div className="modal-body">
               <p>The game is ready to play!</p>
               {renderBuyingOptions()}
-              <button type="button" className="btn btn-secondary" onClick={() => {WorkerClass.getInstance().using('Food'); setEatingModal(false);Production2();}}
-                disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food<WorkerClass.getInstance().getinfo().population.population_level}> 
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().using('Food'); setEatingModal(false); Production2(); }}
+                disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food < WorkerClass.getInstance().getinfo().population.population_level}>
                 Using </button>
             </div>
             <div className="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div>)}
+    {showVotingModal === 1 && (
+      <div className="modal fade show " style={{ display: 'block' }} data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-hidden="true" >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Voting</h5>
+            </div>
+            <div className="modal-body">
+              <p>The game is ready to play!</p>
+              {RenderVotingOptions()}
+              {votingName ? (
+                <h3>
+                  {votingName}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => { setVotingmodel(2) }}
+                  >
+                    Using
+                  </button>
+                </h3>
+              ) : (
+                <button>No voting options available.</button>
+              )}
+              <button className="btn btn-primary" type="button" onClick={() => { setVotingmodel(2) }}
+              >
+                Using </button>
+            </div>
+            <div className="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div >)
+    }
+    {showVotingModal === 2 && (
+      <div className="modal fade show " style={{ display: 'block' }} data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-hidden="true" >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">voting + {votingName}</h5>
+            </div>
+            <div className="modal-body">
+              <div>the workerclass has {Board.getInstance().checkAgree(WorkerClass.getInstance())}</div>
+              <div>the Capitalistclass has {Board.getInstance().checkAgree(CapitalistClass.getInstance())}</div>
+              <div className="input-group mb-3">
+                {Board.getInstance().checkAgree(WorkerClass.getInstance()) === "no" && <div>WorkerClass
+                  <button className="btn btn-primary" onClick={() => Board.getInstance().setAgree(WorkerClass.getInstance(), true)}
+                  >
+                    agree</button>
+                  <button className="btn btn-primary" onClick={() => Board.getInstance().setAgree(WorkerClass.getInstance(), false)}
+                  >
+                    disagree</button></div>}
+                {Board.getInstance().checkAgree(CapitalistClass.getInstance()) === "no" && <div>CapitalistClass
+                  <button className="btn btn-primary" onClick={() => Board.getInstance().setAgree(CapitalistClass.getInstance(), true)}
+                  >
+                    agree</button>
+                  <button className="btn btn-primary" onClick={() => Board.getInstance().setAgree(CapitalistClass.getInstance(), false)}>
+                    disagree</button></div>}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal"
+                  onClick={() => { setVotingmodel(3), Board.getInstance().Votingforbag() }}>
+                  Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>)}
+    {showVotingModal === 3 && (
+      <div className="modal fade show " style={{ display: 'block' }} data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-hidden="true"  >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">voting + {votingName}</h5>
+            </div>
+            <div className="modal-body">
+              <div>the worker has {Board.getInstance().getinfo().Votingresult.Workerclass}</div>
+              <div>the Capitalistclass has {Board.getInstance().getinfo().Votingresult.Capitalistclass}</div>
+              <div className="input-group mb-3">
+                <span className="input-group-text" id="basic-addon1">Number</span>
+                <input
+                  type="text"
+                  className="form-control"
+                  aria-label="Input number"
+                  value={inputValue}
+                  onChange={(event) => handleInputChange(event, 'Influence-WorkerClass')}
+                />
+              </div>
+              <button className="btn btn-primary" type="button"
+                onClick={() => { setVotingmodel(4) }}>Submit</button>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>)}
+    {showVotingModal === 4 && (
+      <div className="modal fade show " style={{ display: 'block' }} data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-hidden="true"  >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">voting + {votingName}</h5>
+            </div>
+            <div className="modal-body">
+              <div>the worker has {Board.getInstance().getinfo().Votingresult.Workerclass}</div>
+              <div>the Capitalistclass has {Board.getInstance().getinfo().Votingresult.Capitalistclass}</div>
+              <div className="input-group mb-3">
+                <span className="input-group-text" id="basic-addon1">Number</span>
+                <input
+                  type="text"
+                  className="form-control"
+                  aria-label="Input number"
+                  value={inputValue}
+                  onChange={(event) => handleInputChange(event, 'Influence-Capitalistclass')}
+                />
+              </div>
+              <div>wewewewe</div>
+              <button onClick={() => (Board.getInstance().Voting3(workerInfluence!, capitalistInfluence!, votingName!), RenderVotingOptions())} >Submit</button>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
@@ -402,8 +586,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
   const info = nowclass instanceof WorkerClass
     ? WorkerClass.getInstance().getinfo()
     : CapitalistClass.getInstance().getinfo();
-
-
   const openModalWithVoting = (name: keyof Policy) => {
     setVotingName(name);
   };
@@ -1008,7 +1190,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
     CapitalistClass.getInstance().GiveBonus(company as CapitalistCompany);
     setfreeAction();
   }
-
   return (
     <div className="container">
       <div className="d-flex justify-content-center" id="menu">
@@ -1931,7 +2112,6 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
           </div>
         </div>
       </div>
-
     </div >
   );
 };
