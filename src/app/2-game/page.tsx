@@ -13,7 +13,7 @@ interface GameState {
   nowclass: WorkerClass | CapitalistClass;
   currentTurn: number;
   currentRound: number;
-  phase: 'Action' | 'Production' | 'Preparation Phase'|'End Phase';
+  phase: 'Action' | 'Production' | 'Preparation Phase' | 'End Phase';
   maxRounds: number;
   maxTurns: number;
 };
@@ -153,7 +153,7 @@ export default function GameRun() {
     };
   }, []);
   const handleNextRound = () => {
-    if (gameState.currentRound === 1 && gameState.currentTurn <2 && gameState.nowclass instanceof CapitalistClass) {
+    if (gameState.currentRound === 1 && gameState.currentTurn < 2 && gameState.nowclass instanceof CapitalistClass) {
       setGameState(prev => ({
         ...prev,
         phase: 'Production'
