@@ -1,3 +1,4 @@
+
 import { CapitalistCompany, CapitalistCompanys, Company } from './company'
 import { EventEmitter } from 'events';
 import { parse, stringify } from 'flatted';

@@ -1,13 +1,14 @@
-"use client";
+"use client"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-import React, { useState, useEffect, ReactElement } from 'react';
+import React, { useState, useEffect} from 'react';
 import { WorkerClass, GoodsAndServices, Worker, Population } from '../../lib/worker class';
 import { CapitalistClass, CapitalistGoodsAndServices } from '@/lib/Capitalist class';
-import { Board, Policy, StategoodsAndServices, Item, Export, ExportKeys } from '@/lib/board';
+import { Board, Policy, StategoodsAndServices, Item} from '@/lib/board';
 import Image from 'next/image'
 import { Company, CapitalistCompany } from '@/lib/company';
 import { parse, stringify } from 'flatted';
+
 
 interface GameState {
   nowclass: WorkerClass | CapitalistClass;
@@ -57,7 +58,6 @@ const GameRun: React.FC = () => {
   const [votingName, setVotingName] = useState<String | undefined>(undefined);
 
   useEffect(() => {
-    // 确保此代码仅在客户端运行
     if (typeof window !== 'undefined') {
       try {
         const savedState = localStorage.getItem('gameState');
@@ -71,15 +71,15 @@ const GameRun: React.FC = () => {
     }
   }, []);
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const savedBoard = localStorage.getItem('Board');
       const savedWorkerClass = localStorage.getItem('WorkerClass');
       const savedCapitalistClass = localStorage.getItem('CapitalistClass');
 
       if (savedBoard) {
         try {
+          const parsedBoard = parse(savedBoard) as Partial<Board>;
           const board = Board.getInstance();
-          Object.assign(board, parse(savedBoard)); // 使用 flatted 的 parse 方法
         } catch (e) {
           console.error('Error parsing board state from localStorage', e);
         }
@@ -87,8 +87,9 @@ const GameRun: React.FC = () => {
 
       if (savedWorkerClass) {
         try {
+          const parsedWorkerClass = parse(savedWorkerClass) as Partial<WorkerClass>;
           const workerClass = WorkerClass.getInstance();
-          Object.assign(workerClass, parse(savedWorkerClass)); // 使用 flatted 的 parse 方法
+          Object.assign(workerClass, parsedWorkerClass);
           if (workerClass.getinfo().population.worker.length < 10) {
             setfirst(true);
           }
@@ -99,24 +100,28 @@ const GameRun: React.FC = () => {
 
       if (savedCapitalistClass) {
         try {
+          const parsedCapitalistClass = parse(savedCapitalistClass) as Partial<CapitalistClass>;
           const capitalistClass = CapitalistClass.getInstance();
-          Object.assign(capitalistClass, parse(savedCapitalistClass)); // 使用 flatted 的 parse 方法
+          Object.assign(capitalistClass, parsedCapitalistClass);
         } catch (e) {
           console.error('Error parsing capitalist class state from localStorage', e);
         }
       }
     }
   }, []);
+
   useEffect(() => {
     if (gameState.currentRound > gameState.maxRounds && gameState.phase === 'Action') {
       setGameState(prev => ({ ...prev, phase: 'Production' }));
     }
   }, [gameState.currentRound, gameState.maxRounds, gameState.phase]);
+
   useEffect(() => {
     if (gameState.currentTurn > gameState.maxTurns) {
       alert('Game Over');
     }
   }, [gameState.currentTurn, gameState.maxTurns]);
+
   useEffect(() => {
     localStorage.setItem('gameState', stringify(gameState));
     const board = Board.getInstance();
@@ -126,32 +131,36 @@ const GameRun: React.FC = () => {
     const capitalistClass = CapitalistClass.getInstance();
     localStorage.setItem('CapitalistClass', stringify(capitalistClass)); // 使用 flatted 的 stringify 方法
   }, [gameState]);
+
   const [data, setData] = useState({
     workerclass: WorkerClass.getInstance(),
     capitalistclass: CapitalistClass.getInstance(),
     board: Board.getInstance(),
   });
-  useEffect(() => {
-    const workerInstance = WorkerClass.getInstance();
-    const capitalistInstance = CapitalistClass.getInstance();
-    const boardInstance = Board.getInstance();
-    const updateData = () => {
-      setData({
-        workerclass: workerInstance,
-        capitalistclass: capitalistInstance,
-        board: boardInstance,
-      });
-    };
-    workerInstance.on('update', updateData);
-    capitalistInstance.on('update', updateData);
-    boardInstance.on('update', updateData);
 
-    return () => {
-      console.log('Unregistering event listeners');
-      workerInstance.off('update', updateData);
-      capitalistInstance.off('update', updateData);
-      boardInstance.off('update', updateData);
-    };
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const workerInstance = WorkerClass.getInstance();
+      const capitalistInstance = CapitalistClass.getInstance();
+      const boardInstance = Board.getInstance();
+      const updateData = () => {
+        setData({
+          workerclass: workerInstance,
+          capitalistclass: capitalistInstance,
+          board: boardInstance,
+        });
+      };
+      workerInstance.on('update', updateData);
+      capitalistInstance.on('update', updateData);
+      boardInstance.on('update', updateData);
+
+      return () => {
+        console.log('Unregistering event listeners');
+        workerInstance.off('update', updateData);
+        capitalistInstance.off('update', updateData);
+        boardInstance.off('update', updateData);
+      };
+    }
   }, []);
   const handleNextRound = () => {
     if (gameState.currentRound === 1 && gameState.currentTurn < 2 && gameState.nowclass instanceof CapitalistClass) {

@@ -1,3 +1,4 @@
+
 import { WorkerClass, Worker, GoodsAndServices } from "./worker class";
 import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
@@ -138,6 +139,7 @@ export class Board extends EventEmitter {
         }
         return Board.instance;
     }
+    
     setBoard(data: Board) {
         this.DemonStration = data.DemonStration;
         this.loan = data.loan;

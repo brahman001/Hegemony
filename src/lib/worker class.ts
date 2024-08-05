@@ -1,3 +1,4 @@
+
 import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
 import { CapitalistClass } from './Capitalist class';
