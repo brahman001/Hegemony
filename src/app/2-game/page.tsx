@@ -36,7 +36,7 @@ interface ActionToggleProps {
   setBasicAction: () => void;
   setfreeAction: () => void;
 };
-export default function GameRun() {
+const GameRun: React.FC = () => {
   const [first, setfirst] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     nowclass: WorkerClass.getInstance(),
@@ -2401,3 +2401,5 @@ function working(company: Company): boolean {
   }
   return company.workingworkers.length === company.requiredWorkers && skilledWorker >= company.skilledworker;
 };
+
+export default GameRun;
