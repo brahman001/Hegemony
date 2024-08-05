@@ -16,18 +16,18 @@ interface GameState {
   phase: 'Action' | 'Production' | 'Preparation Phase'|'End Phase';
   maxRounds: number;
   maxTurns: number;
-}
+};
 interface Action {
   label: string;
   databstarget?: string;
   onClick?: () => void;
   subActions?: Action[];
   visibleFor: ('WorkerClass' | 'CapitalistClass')[];
-}
+};
 interface Actions {
   basic: Action[];
   free: Action[];
-}
+};
 interface ActionToggleProps {
   nowclass: WorkerClass | CapitalistClass;
   onActionComplete: () => void;
@@ -35,7 +35,7 @@ interface ActionToggleProps {
   usedfreeActions: boolean;
   setBasicAction: () => void;
   setfreeAction: () => void;
-}
+};
 export default function GameRun() {
   const [first, setfirst] = useState(false);
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -557,7 +557,7 @@ export default function GameRun() {
         </div>
       </div>)}
   </>);
-}
+};
 const arraysEqual = (a: number[], b: number[]) => {
   if (a === b) return true;
   if (a == null || b == null) return false;
@@ -2389,8 +2389,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
 
       </div></>
   );
-}
-
+};
 function working(company: Company): boolean {
   const workers = company.workingworkers;
   let Workers = 0, skilledWorker = 0;
@@ -2400,4 +2399,4 @@ function working(company: Company): boolean {
     }
   }
   return company.workingworkers.length === company.requiredWorkers && skilledWorker >= company.skilledworker;
-}
+};
