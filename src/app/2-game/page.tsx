@@ -38,26 +38,13 @@ interface ActionToggleProps {
 };
 export default function GameRun() {
   const [first, setfirst] = useState(false);
-  const [gameState, setGameState] = useState<GameState>(() => {
-    if (typeof window !== "undefined") {
-      const savedState = localStorage.getItem('gameState');
-      if (savedState) {
-        try {
-          return parse(savedState);
-        } catch (e) {
-          console.error('Error parsing game state from localStorage using flatted', e);
-        }
-      }
-    }
-    setfirst(true);
-    return ({
-      nowclass: WorkerClass,
-      currentTurn: 1,
-      currentRound: 1,
-      phase: 'Action',
-      maxRounds: 5,
-      maxTurns: 5
-    });
+  const [gameState, setGameState] = useState<GameState>({
+    nowclass: WorkerClass.getInstance(),
+    currentTurn: 1,
+    currentRound: 1,
+    phase: 'Action',
+    maxRounds: 5,
+    maxTurns: 5,
   });
   const [showInitializationModal, setInitializationModal] = useState(false);
   const [showEatingModal, setEatingModal] = useState(false);
@@ -69,6 +56,20 @@ export default function GameRun() {
   const [capitalistInfluence, setCapitalistInfluence] = useState<number | null>(null);
   const [votingName, setVotingName] = useState<String | undefined>(undefined);
 
+  useEffect(() => {
+    // 确保此代码仅在客户端运行
+    if (typeof window !== 'undefined') {
+      try {
+        const savedState = localStorage.getItem('gameState');
+        if (savedState) {
+          const parsedState = JSON.parse(savedState);
+          setGameState(parsedState);
+        }
+      } catch (e) {
+        console.error('Error parsing game state from localStorage', e);
+      }
+    }
+  }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBoard = localStorage.getItem('Board');
