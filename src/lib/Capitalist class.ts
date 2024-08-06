@@ -1,4 +1,3 @@
-
 import { CapitalistCompany, CapitalistCompanys, Company } from './company'
 import { EventEmitter } from 'events';
 import { parse, stringify } from 'flatted';
@@ -86,6 +85,7 @@ export class CapitalistClass extends EventEmitter {
     }
     public static getInstance(): CapitalistClass {
         if (!CapitalistClass.instance) {
+            if (typeof window !== 'undefined') {
             const saveddata = localStorage.getItem('CapitalistClass');
             if (saveddata) {
                 CapitalistClass.instance = new CapitalistClass();
@@ -93,7 +93,7 @@ export class CapitalistClass extends EventEmitter {
             } else {
                 CapitalistClass.instance = new CapitalistClass();
             }
-        }
+        }}
         return CapitalistClass.instance;
     }
     SetCapitalistClass(data: CapitalistClass) {

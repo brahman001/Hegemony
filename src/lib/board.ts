@@ -1,4 +1,3 @@
-
 import { WorkerClass, Worker, GoodsAndServices } from "./worker class";
 import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
@@ -129,6 +128,7 @@ export class Board extends EventEmitter {
     }
     static getInstance() {
         if (!Board.instance) {
+            if (typeof window !== 'undefined') {
             const saveddata = localStorage.getItem('Board');
             if (saveddata) {
                 Board.instance = new Board();
@@ -136,10 +136,9 @@ export class Board extends EventEmitter {
             } else {
                 Board.instance = new Board();
             }
-        }
+        }}
         return Board.instance;
     }
-    
     setBoard(data: Board) {
         this.DemonStration = data.DemonStration;
         this.loan = data.loan;

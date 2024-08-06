@@ -1,4 +1,3 @@
-
 import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
 import { CapitalistClass } from './Capitalist class';
@@ -83,6 +82,7 @@ export class WorkerClass extends EventEmitter {
     }
     public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
+            if (typeof window !== 'undefined') {
             const savedData = localStorage.getItem('WorkerClass');
             if (savedData) {
                 // Use flatted.parse instead of JSON.parse
@@ -91,7 +91,7 @@ export class WorkerClass extends EventEmitter {
             } else {
                 WorkerClass.instance = new WorkerClass();
             }
-        }
+        }}
         return WorkerClass.instance;
     }
     setWorkerClass(data: any): void {
