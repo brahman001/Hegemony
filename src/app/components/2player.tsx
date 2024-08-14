@@ -9,7 +9,6 @@ import Image from 'next/image'
 import { Company, CapitalistCompany } from '@/lib/company';
 import { stringify } from 'flatted';
 
-
 interface GameState {
   nowclass: WorkerClass | CapitalistClass;
   currentTurn: number;
@@ -37,7 +36,8 @@ interface ActionToggleProps {
   setBasicAction: () => void;
   setfreeAction: () => void;
 };
-const GameRun: React.FC = () => {
+
+export const GameRun: React.FC = () => {
   const [first, setfirst] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     nowclass: WorkerClass.getInstance(),
@@ -58,7 +58,6 @@ const GameRun: React.FC = () => {
   const [capitalistInfluence, setCapitalistInfluence] = useState<number | null>(null);
   const [votingName, setVotingName] = useState<String | undefined>(undefined);
   const [winer, setwiner] = useState<string>();
-
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       try {
@@ -138,7 +137,6 @@ const GameRun: React.FC = () => {
     capitalistclass: CapitalistClass.getInstance(),
     board: Board.getInstance(),
   });
-
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       const workerInstance = WorkerClass.getInstance();
@@ -215,13 +213,13 @@ const GameRun: React.FC = () => {
           count--;
         }
       }
-      if(count>0){
+      if (count > 0) {
         setwiner("CapitalistClass");
       }
-      else if(count<0){
+      else if (count < 0) {
         setwiner("WorkerClass");
       }
-      else{
+      else {
         setwiner("both");
       }
     }
@@ -1293,7 +1291,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </div>
               <label data-bs-dismiss="modal" aria-label="Close" />
             </div>
-            {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedBasicActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1436,8 +1434,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
-            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
+            <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p> havingunskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
               {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem] >= WorkerClass.getInstance().getinfo().population.population_level ?
                 Usingitem === 'Education' as keyof GoodsAndServices ?
@@ -1446,7 +1444,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                 <button className="btn btn-primary" onClick={() => handleUsing()} disabled={usedfreeActions}>not enough</button>
               }
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1478,7 +1476,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                 :
                 <div>no loan</div>
               }
-              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+              {usedfreeActions && <p>action done</p>}
             </div>
 
             <div className="modal-footer">
@@ -1495,7 +1493,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">UsingEducation</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>当前有{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div> having{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
               <div className="d-flex">
                 <ul className="p-2 flex-fill">
@@ -1536,14 +1534,14 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">upgrade</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>当前有{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
+            <div> having{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</div>
             <div className="modal-body">
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Agriculture'))}>Agriculture</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury'))}>Luxury</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathlcare'))}>Heathlcare</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education'))}>Education</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media'))}>Media</button>
-              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+              {usedfreeActions && <p>action done</p>}
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1558,7 +1556,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">SwapWorker</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>当前有{Board.getInstance().getinfo().unempolyment.filter(worker => worker.skill === 'unskill').length}</div>
+            <div> having{Board.getInstance().getinfo().unempolyment.filter(worker => worker.skill === 'unskill').length}</div>
             <div className="modal-body">
               <div className="d-flex">
                 <ul className="p-2 flex-fill">
@@ -1590,7 +1588,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                             })} className="btn btn-primary" data-bs-dismiss="modal">Swap Worker{worker.skill}</button>}</div>))}
                     </div>))}</ul>
               </div>
-              {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+              {usedfreeActions && <p>action done</p>}
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1605,12 +1603,12 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
-            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
+            <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p> havingunskill worker{WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
               {renderBuyingOptions(Usingitem)}
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1624,8 +1622,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
-            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p>当前有unskill worker
+            <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' as keyof GoodsAndServices && <p> havingunskill worker
               {WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
               <ul className="p-2 flex-fill">
@@ -1691,7 +1689,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </ul>
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1705,8 +1703,8 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{Usingitem}有{WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
-            <div>{Usingitem === 'Education' && <p>当前有unskill worker {WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
+            <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
+            <div>{Usingitem === 'Education' && <p> havingunskill worker {WorkerClass.getInstance().getinfo().population.worker.filter(worker => worker.skill === "unskill").length}</p>}</div>
             <div className="modal-body">
               <ul className="p-2 flex-fill">
                 <div>TradeUnions</div>
@@ -1846,7 +1844,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </ul>
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1861,7 +1859,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div>{Board.getInstance().getinfo().unempolyment.length}
-              岗位有{calculateRemainingPositions()}
+              there are {calculateRemainingPositions()} in this company
             </div>
             <div className="modal-body">
               {Board.getInstance().getinfo().unempolyment.length > calculateRemainingPositions() + 1
@@ -1871,7 +1869,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
 
               <label data-bs-dismiss="modal" aria-label="Close" />
             </div>
-            {usedBasicActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedBasicActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1903,7 +1901,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </ul>
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -1936,7 +1934,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </ul>
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2018,7 +2016,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               </button>
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2042,7 +2040,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                 <Image src={Board.getInstance().getinfo().BusinessDeal[1].imageUrl} alt='BusinessDeal-1' width={100} height={100} />
               </button>}
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2068,7 +2066,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                     <button style={{ margin: '10px' }} className="btn btn-primary" onClick={() => handleAdjustPrices(10)} disabled={usedfreeActions} data-bs-dismiss="modal" >10</button></div>
               }
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2100,7 +2098,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               ))}
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2133,7 +2131,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               }
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2163,7 +2161,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               ))}
 
             </div>
-            {usedfreeActions && <p>这段话仅在 isActive 为 true 时显示。</p>}
+            {usedfreeActions && <p>action done</p>}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -2209,11 +2207,11 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <td className="col">{data.workerclass.getinfo().goodsAndServices.Education}</td>
             <td className="col">{data.workerclass.getinfo().goodsAndServices.Health}</td>
             <td className="col">{data.workerclass.getinfo().goodsAndServices.Influence}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Agriculture ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Luxury ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Heathlcare ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Education ? '有' : '没有'}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Media ? '有' : '没有'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Agriculture ? 'existence' : 'null'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Luxury ? 'existence' : 'null'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Heathlcare ? 'existence' : 'null'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Education ? 'existence' : 'null'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Media ? 'existence' : 'null'}</td>
             <td className="col">{data.workerclass.getinfo().loan}</td>
           </tr>
         </tbody>
