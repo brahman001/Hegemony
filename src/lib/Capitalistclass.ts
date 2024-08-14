@@ -1,9 +1,10 @@
+
 import { CapitalistCompany, CapitalistCompanys, Company } from './company'
 import { EventEmitter } from 'events';
 import { parse, stringify } from 'flatted';
 import { Board, Item } from './board';
 import { copyFile } from 'fs';
-import { WorkerClass } from './worker class';
+import { WorkerClass } from './workerclass';
 export interface CapitalistGoodsAndServices {
     Food: number;
     Luxury: number;
@@ -85,15 +86,16 @@ export class CapitalistClass extends EventEmitter {
     }
     public static getInstance(): CapitalistClass {
         if (!CapitalistClass.instance) {
-            if (typeof window !== 'undefined') {
-            const saveddata = localStorage.getItem('CapitalistClass');
-            if (saveddata) {
-                CapitalistClass.instance = new CapitalistClass();
-                CapitalistClass.instance.SetCapitalistClass(parse(saveddata));
-            } else {
-                CapitalistClass.instance = new CapitalistClass();
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                const saveddata = localStorage.getItem('CapitalistClass');
+                if (saveddata) {
+                    CapitalistClass.instance = new CapitalistClass();
+                    CapitalistClass.instance.SetCapitalistClass(parse(saveddata));
+                } else {
+                    CapitalistClass.instance = new CapitalistClass();
+                }
             }
-        }}
+        }
         return CapitalistClass.instance;
     }
     SetCapitalistClass(data: CapitalistClass) {
@@ -551,8 +553,8 @@ export class CapitalistClass extends EventEmitter {
         }
     }
     perparation() {
-        this.Company.map((company) => {company.Commit=false});
-        this.Capitalist-=(this.loan*5);
+        this.Company.map((company) => { company.Commit = false });
+        this.Capitalist -= (this.loan * 5);
         this.Market = [];
         let i = 0;
         while (i < 5) {
@@ -563,6 +565,42 @@ export class CapitalistClass extends EventEmitter {
             }
         }
     }
+    EndPhase() {
+        const policy = Board.getInstance().getinfo().Policy;
+        const policyKeys: (keyof typeof policy)[] = ['Fiscal', 'Labor', 'Taxation', 'Health', 'Education'];
+        let count = 0;
+    
+        // 计算有多少个政策为 'C'
+        for (const key of policyKeys) {
+            if (policy[key] === 'C') {
+                count++;
+            }
+        }
+    
+        // 根据 count 调整 score
+        const scoreMap = [0, 1, 4, 8, 12, 18];
+        this.score += scoreMap[count];
+    
+        // 增加 goodsAndServices 的分数
+        this.score += Math.floor(this.goodsAndServices.Food / 2);
+        this.score += Math.floor(this.goodsAndServices.Education / 3);
+        this.score += Math.floor(this.goodsAndServices.Health / 3);
+        this.score += Math.floor(this.goodsAndServices.Luxury / 3);
+    
+        // 处理贷款偿还
+        while (this.loan > 0) {
+            if (this.Capitalist >= 50) {
+                this.Capitalist -= 50;
+                this.loan--;
+            } else {
+                break;
+            }
+        }
+
+        // 贷款扣分
+        this.score -= this.loan * 5;
+    }
+    
 }
 function working(company: Company): boolean {
     const workers = company.workingworkers;

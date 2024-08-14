@@ -1,5 +1,5 @@
-import { WorkerClass, Worker } from "./worker class";
-import { CapitalistClass } from "./Capitalist class"
+import { WorkerClass, Worker } from "./workerclass";
+import { CapitalistClass } from "./Capitalistclass"
 import { Board } from "./board";
 
 type istateindustry = 'Heathlcare' | 'Education' | 'Media';

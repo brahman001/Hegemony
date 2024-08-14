@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
-import { CapitalistClass } from './Capitalist class';
+import { CapitalistClass } from './Capitalistclass';
 import { Board } from './board';
 import { parse, stringify } from 'flatted';
 type skillkind = 'Agriculture' | 'Luxury' | 'Heathlcare' | 'Education' | 'Media' | 'unskill';
@@ -82,16 +82,16 @@ export class WorkerClass extends EventEmitter {
     }
     public static getInstance(): WorkerClass {
         if (!WorkerClass.instance) {
-            if (typeof window !== 'undefined') {
-            const savedData = localStorage.getItem('WorkerClass');
-            if (savedData) {
-                // Use flatted.parse instead of JSON.parse
-                WorkerClass.instance = new WorkerClass();
-                WorkerClass.instance.setWorkerClass(parse(savedData));
-            } else {
-                WorkerClass.instance = new WorkerClass();
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                const savedData = localStorage.getItem('WorkerClass');
+                if (savedData) {
+                    WorkerClass.instance = new WorkerClass();
+                    WorkerClass.instance.setWorkerClass(parse(savedData));
+                } else {
+                    WorkerClass.instance = new WorkerClass();
+                }
             }
-        }}
+        }
         return WorkerClass.instance;
     }
     setWorkerClass(data: any): void {
@@ -415,5 +415,20 @@ export class WorkerClass extends EventEmitter {
             this.addWorker('unskill', null);
         }
     }
+    EndPhase() {
+        const policy = Board.getInstance().getinfo().Policy;
+        const policyKeys: (keyof typeof policy)[] = ['Fiscal', 'Labor', 'Taxation', 'Health', 'Education'];
+        
+        // 计算有多少个政策为 'A'
+        const count = policyKeys.reduce((acc, key) => acc + (policy[key] === 'A' ? 1 : 0), 0);
+        
+        // 根据 count 调整 score
+        const scoreMap = [0, 1, 4, 8, 12, 18];
+        this.score += scoreMap[count];
+    
+        // 增加收入分数
+        this.score += Math.min(Math.floor(this.income / 10), 15);
+    }
+    
 }
 

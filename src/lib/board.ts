@@ -1,9 +1,9 @@
-import { WorkerClass, Worker, GoodsAndServices } from "./worker class";
+import { WorkerClass, Worker, GoodsAndServices } from "./workerclass";
 import { EventEmitter } from 'events';
 import { StateCompany, StateCompanies } from './company'
 import { Company } from "./company";
 import { parse, stringify } from 'flatted';
-import { CapitalistClass, CapitalistGoodsAndServices } from "./Capitalist class";
+import { CapitalistClass, CapitalistGoodsAndServices } from "./Capitalistclass";
 export interface Policy {
     Fiscal: string;
     Labor: string;
@@ -128,7 +128,7 @@ export class Board extends EventEmitter {
     }
     static getInstance() {
         if (!Board.instance) {
-            if (typeof window !== 'undefined') {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             const saveddata = localStorage.getItem('Board');
             if (saveddata) {
                 Board.instance = new Board();
