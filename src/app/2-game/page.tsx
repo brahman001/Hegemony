@@ -57,6 +57,7 @@ const GameRun: React.FC = () => {
   const [workerInfluence, setWorkerInfluence] = useState<number | null>(null);
   const [capitalistInfluence, setCapitalistInfluence] = useState<number | null>(null);
   const [votingName, setVotingName] = useState<String | undefined>(undefined);
+  const [winer, setwiner] = useState<string>();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
@@ -191,10 +192,39 @@ const GameRun: React.FC = () => {
       );
     }
   };
-  const EndPhase = ()=>{
+  const EndPhase = () => {
     CapitalistClass.getInstance().EndPhase();
     WorkerClass.getInstance().EndPhase();
     setEndmodel(true);
+    if (CapitalistClass.getInstance().getinfo().Score > WorkerClass.getInstance().getinfo().score) {
+      setwiner("CapitalistClass");
+    }
+    else if (CapitalistClass.getInstance().getinfo().Score < WorkerClass.getInstance().getinfo().score) {
+      setwiner("WorkerClass");
+    }
+    else {
+      const policy = Board.getInstance().getinfo().Policy;
+      const policyKeys: (keyof typeof policy)[] = ['Fiscal', 'Labor', 'Taxation', 'Health', 'Education'];
+      let count = 0;
+
+      for (const key of policyKeys) {
+        if (policy[key] === 'C') {
+          count++;
+        }
+        if (policy[key] === 'A') {
+          count--;
+        }
+      }
+      if(count>0){
+        setwiner("CapitalistClass");
+      }
+      else if(count<0){
+        setwiner("WorkerClass");
+      }
+      else{
+        setwiner("both");
+      }
+    }
   }
   const toggleNowclass = (current: WorkerClass | CapitalistClass): WorkerClass | CapitalistClass => {
     return current instanceof WorkerClass ? CapitalistClass.getInstance() : WorkerClass.getInstance();
@@ -211,6 +241,7 @@ const GameRun: React.FC = () => {
     setEndmodel(false);
     setEatingModal(false);
     setVotingmodel(0);
+    setwiner('');
     setGameState(prevState => ({
       ...prevState,
       nowclass: WorkerClass.getInstance(),
@@ -221,7 +252,7 @@ const GameRun: React.FC = () => {
     setfirst(false);
     setInitializationModal(true);
     setUsedBasicActions(false);
-    setUsedFreeActions(false) 
+    setUsedFreeActions(false)
   }
   const handleCloseModal = () => {
     setInitializationModal(false);
@@ -409,7 +440,7 @@ const GameRun: React.FC = () => {
       setBasicAction={() => setUsedBasicActions(true)}
       setfreeAction={() => setUsedFreeActions(true)}
     />}
-    {gameState.phase === 'Production' && <button type="button" className="btn btn-secondary"onClick={Production1}>Production</button>}
+    {gameState.phase === 'Production' && <button type="button" className="btn btn-secondary" onClick={Production1}>Production</button>}
     {showInitializationModal && (
       <div className="modal fade show" style={{ display: 'block' }} aria-modal="true" role="dialog">
         <div className="modal-dialog">
@@ -575,7 +606,7 @@ const GameRun: React.FC = () => {
           </div>
         </div>
       </div>)}
-      {showEndModal === true && (
+    {showEndModal === true && (
       <div className="modal fade show " style={{ display: 'block' }} data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-hidden="true" >
         <div className="modal-dialog">
           <div className="modal-content">
@@ -583,8 +614,9 @@ const GameRun: React.FC = () => {
               <h5 className="modal-title">gameend</h5>
             </div>
             <div className="modal-body">
-             <div>Workerclass get {WorkerClass.getInstance().getinfo().score}</div>
-             <div>CapitalistClass get {CapitalistClass.getInstance().getinfo().Score}</div>
+              <div>Workerclass get {WorkerClass.getInstance().getinfo().score}</div>
+              <div>CapitalistClass get {CapitalistClass.getInstance().getinfo().Score}</div>
+              <h1>the winer is {winer}</h1>
             </div>
             <button onClick={handleInitialization}>initialization</button>
             <div className="modal-footer">
@@ -2418,7 +2450,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
 };
 function working(company: Company): boolean {
   const workers = company.workingworkers;
-  let  skilledWorker = 0;
+  let skilledWorker = 0;
   for (let i = 0; i < workers.length; i++) {
     if (workers[i].skill === company.industry) {
       skilledWorker++;

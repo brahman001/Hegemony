@@ -178,10 +178,10 @@ export class CapitalistClass extends EventEmitter {
         this.Revenue = 0;
         this.Capitalist = 120;
         this.goodsAndServices = {
-            Food: 10,
-            Luxury: 20,
-            Health: 10,
-            Education: 10,
+            Food: 1,
+            Luxury: 2,
+            Health: 0,
+            Education: 2,
             Influence: 1,
             FoodLimit: 8,
             LuxuryLimit: 12,
@@ -589,8 +589,8 @@ export class CapitalistClass extends EventEmitter {
     
         // 处理贷款偿还
         while (this.loan > 0) {
-            if (this.Capitalist >= 50) {
-                this.Capitalist -= 50;
+            if (this.Capitalist >= 55) {
+                this.Capitalist -= 55;
                 this.loan--;
             } else {
                 break;

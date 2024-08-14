@@ -118,15 +118,15 @@ export class WorkerClass extends EventEmitter {
             Education: false,
             Media: false,
         };
-        this.income = 20;
+        this.income = 30;
         this.prosperity = 0;
         this.cooperativefarm = 0;
         this.goodsAndServices = {
-            Food: 6,
-            Luxury: 6,
-            Health: 10,
-            Education: 6,
-            Influence: 10,
+            Food: 0,
+            Luxury: 0,
+            Health: 0,
+            Education: 0,
+            Influence: 1,
         };
         this.addWorker("unskill", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
         this.addWorker("Agriculture", CapitalistClass.getInstance().getinfo().companys.find(CapitalistCompany => CapitalistCompany.name === "FARM_basic") as CapitalistCompany);
@@ -418,17 +418,22 @@ export class WorkerClass extends EventEmitter {
     EndPhase() {
         const policy = Board.getInstance().getinfo().Policy;
         const policyKeys: (keyof typeof policy)[] = ['Fiscal', 'Labor', 'Taxation', 'Health', 'Education'];
-        
         // 计算有多少个政策为 'A'
         const count = policyKeys.reduce((acc, key) => acc + (policy[key] === 'A' ? 1 : 0), 0);
-        
         // 根据 count 调整 score
         const scoreMap = [0, 1, 4, 8, 12, 18];
         this.score += scoreMap[count];
-    
-        // 增加收入分数
+        while (this.loan > 0) {
+            if (this.income >= 55) {
+                this.income -= 55;
+                this.loan--;
+            } else {
+                this.score -= Math.floor((55 - this.income) / 5);
+                this.loan--;
+            }
+        }
         this.score += Math.min(Math.floor(this.income / 10), 15);
     }
-    
+
 }
 
