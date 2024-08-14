@@ -2418,7 +2418,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
 };
 function working(company: Company): boolean {
   const workers = company.workingworkers;
-  let Workers = 0, skilledWorker = 0;
+  let  skilledWorker = 0;
   for (let i = 0; i < workers.length; i++) {
     if (workers[i].skill === company.industry) {
       skilledWorker++;
