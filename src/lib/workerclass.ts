@@ -3,7 +3,7 @@ import { CapitalistCompany, Company, StateCompany } from '@/lib/company'
 import { CapitalistClass } from './Capitalistclass';
 import { Board } from './board';
 import { parse, stringify } from 'flatted';
-type skillkind = 'Agriculture' | 'Luxury' | 'Heathlcare' | 'Education' | 'Media' | 'unskill';
+export type skillkind = 'Agriculture' | 'Luxury' | 'Healthcare' | 'Education' | 'Media' | 'unskill';
 export interface Worker {
     skill: skillkind;
     location: Company | null | keyof TradeUnions;
@@ -12,7 +12,7 @@ export interface Population {
     Natureofposition: {
         Agriculture: number;
         Luxury: number;
-        Heathlcare: number;
+       Healthcare: number;
         Education: number;
         Media: number;
     };
@@ -23,7 +23,7 @@ export interface Population {
 interface TradeUnions {
     Agriculture: boolean;
     Luxury: boolean;
-    Heathlcare: boolean;
+   Healthcare: boolean;
     Education: boolean;
     Media: boolean;
 }
@@ -55,7 +55,7 @@ export class WorkerClass extends EventEmitter {
             Natureofposition: {
                 Agriculture: 0,
                 Luxury: 0,
-                Heathlcare: 0,
+               Healthcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -65,7 +65,7 @@ export class WorkerClass extends EventEmitter {
         this.tradeUnions = {
             Agriculture: false,
             Luxury: false,
-            Heathlcare: false,
+           Healthcare: false,
             Education: false,
             Media: false,
         };
@@ -104,7 +104,7 @@ export class WorkerClass extends EventEmitter {
             Natureofposition: {
                 Agriculture: 0,
                 Luxury: 0,
-                Heathlcare: 0,
+               Healthcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -114,7 +114,7 @@ export class WorkerClass extends EventEmitter {
         this.tradeUnions = {
             Agriculture: false,
             Luxury: false,
-            Heathlcare: false,
+           Healthcare: false,
             Education: false,
             Media: false,
         };
@@ -135,7 +135,7 @@ export class WorkerClass extends EventEmitter {
         this.addWorker("unskill", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
         this.addWorker("Education", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "UNIVERSITY_3-2p") as StateCompany);
         this.addWorker("unskill", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
-        this.addWorker("Heathlcare", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
+        this.addWorker("Healthcare", Board.getInstance().getinfo().companys.find(StateCompany => StateCompany.name === "HOSPITAL_3-2p") as StateCompany);
         if (Board.getInstance().getinfo().unempolyment.length === 0) {
             this.addWorker("unskill", null);
         }
@@ -275,6 +275,7 @@ export class WorkerClass extends EventEmitter {
             income: this.income,
             score: this.score,
             loan: this.loan,
+            prosperity: this.prosperity,
         };
     }
     Buying(inputValue: number, Usingitem: keyof GoodsAndServices) {

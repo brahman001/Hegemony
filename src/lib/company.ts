@@ -2,8 +2,8 @@ import { WorkerClass, Worker } from "./workerclass";
 import { CapitalistClass } from "./Capitalistclass"
 import { Board } from "./board";
 
-type istateindustry = 'Heathlcare' | 'Education' | 'Media';
-type Capitalistindustry = 'Agriculture' | 'Luxury' | 'Heathlcare' | 'Education' | 'Media';
+type istateindustry = 'Healthcare' | 'Education' | 'Media';
+type Capitalistindustry = 'Agriculture' | 'Luxury' | 'Healthcare' | 'Education' | 'Media';
 interface Wages {
     level: number;
     1: number;
@@ -101,7 +101,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_16",
         workingworkers: [], Strike: false,Commit:false,
         cost: 16,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 2,
         skilledworker: 1,
         goodsProduced: 6,
@@ -299,7 +299,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_16",
         workingworkers: [], Strike: false,Commit:false,
         cost: 16,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 2,
         skilledworker: 1,
         goodsProduced: 6,
@@ -353,7 +353,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_20",
         workingworkers: [], Strike: false,Commit:false,
         cost: 20,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 2,
         skilledworker: 1,
         goodsProduced: 7,
@@ -389,7 +389,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_20",
         workingworkers: [], Strike: false,Commit:false,
         cost: 20,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 3,
         skilledworker: 1,
         goodsProduced: 8,
@@ -425,7 +425,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_24",
         workingworkers: [], Strike: false,Commit:false,
         cost: 24,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 3,
         skilledworker: 1,
         goodsProduced: 9,
@@ -515,7 +515,7 @@ export const CapitalistCompanys: CapitalistCompany[] = [
         name: "HOSPITAL_basic",
         workingworkers: [], Strike: false,Commit:false,
         cost: 16,
-        industry: 'Heathlcare',
+        industry: 'Healthcare',
         requiredWorkers: 2,
         skilledworker: 1,
         goodsProduced: 6,
@@ -567,19 +567,19 @@ export const StateCompanies: StateCompany[] = [
     },
     {
         name: "HOSPITAL_3-4p", workingworkers: [], Strike: false,Commit:false,
-        cost: 30, industry: 'Heathlcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: 2, 1: 35, 2: 30, 3: 25 }, imageUrl: "/StateCompanies/Hospital_3-4p.jpg"
+        cost: 30, industry: 'Healthcare', requiredWorkers: 3, skilledworker: 1, goodsProduced: 6, wages: { level: 2, 1: 35, 2: 30, 3: 25 }, imageUrl: "/StateCompanies/Hospital_3-4p.jpg"
     },
     {
         name: "HOSPITAL_3-2p", workingworkers: [], Strike: false,Commit:false,
-        cost: 20, industry: 'Heathlcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_3-2p.jpg"
+        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_3-2p.jpg"
     },
     {
         name: "HOSPITAL_2", workingworkers: [], Strike: false,Commit:false,
-        cost: 20, industry: 'Heathlcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_2.jpg"
+        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_2.jpg"
     },
     {
         name: "HOSPITAL_1", workingworkers: [], Strike: false,Commit:false,
-        cost: 20, industry: 'Heathlcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_1.jpg"
+        cost: 20, industry: 'Healthcare', requiredWorkers: 2, skilledworker: 1, goodsProduced: 4, wages: { level: 2, 1: 25, 2: 20, 3: 15 }, imageUrl: "/StateCompanies/Hospital_1.jpg"
     },
     {
         name: "TV STATION_3-4p", workingworkers: [], Strike: false,Commit:false,

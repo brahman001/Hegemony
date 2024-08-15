@@ -450,7 +450,7 @@ export const GameRun: React.FC = () => {
               <p>The game is ready to play!</p>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Agriculture", null); handleCloseModal(); }}>Agriculture</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Luxury", null); handleCloseModal(); }}>Luxury</button>
-              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Heathlcare", null); handleCloseModal(); }}>Heathlcare</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Healthcare", null); handleCloseModal(); }}>Healthcare</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Education", null); handleCloseModal(); }}>Education</button>
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().addWorker("Media", null); handleCloseModal(); }}>Media</button>
             </div>
@@ -779,7 +779,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
       }
     ],
     free: [
-      { label: 'Use Heathlcare', databstarget: 'Using', onClick: () => setUsingitem('Health'), visibleFor: ['WorkerClass'] },
+      { label: 'UseHealthcare', databstarget: 'Using', onClick: () => setUsingitem('Health'), visibleFor: ['WorkerClass'] },
       { label: 'Use Education', databstarget: 'Using', onClick: () => setUsingitem('Education'), visibleFor: ['WorkerClass'] },
       { label: 'Use Luxury', databstarget: 'Using', onClick: () => setUsingitem('Luxury'), visibleFor: ['WorkerClass'] },
       { label: 'Swap workers', databstarget: 'SwapWorker', visibleFor: ['WorkerClass'] },
@@ -1538,7 +1538,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
             <div className="modal-body">
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Agriculture'))}>Agriculture</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Luxury'))}>Luxury</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Heathlcare'))}>Heathlcare</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Healthcare'))}>Healthcare</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Education'))}>Education</button>
               <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => (setfreeAction(), WorkerClass.getInstance().upgrade(usingworker as Worker, 'Media'))}>Media</button>
               {usedfreeActions && <p>action done</p>}
@@ -1730,14 +1730,14 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
                     </button>
                   </div>
                 }
-                {WorkerClass.getInstance().getinfo().population.Natureofposition.Heathlcare >= 4 && usingworker?.skill === "Heathlcare" &&
+                {WorkerClass.getInstance().getinfo().population.Natureofposition.Healthcare >= 4 && usingworker?.skill === "Healthcare" &&
                   <div>
                     <button
-                      onClick={() => AssignWorkerunion("Heathlcare")}
+                      onClick={() => AssignWorkerunion("Healthcare")}
                       className="btn btn-primary"
                       data-bs-dismiss="modal"
                     >
-                      Heathlcare
+                     Healthcare
                     </button>
                   </div>
                 }
@@ -2175,7 +2175,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
   return (
     <>
 
-      <h3 className="container text-center">workercalss</h3>
+      <h3 className="container text-center">Worker class</h3>
       <table className="table table-striped table-bordered" id="wokerclass information">
         <thead>
           <tr className="container text-center">
@@ -2190,7 +2190,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <th>Influence</th>
             <th>Agriculture-Trade unions</th>
             <th >Luxury-Trade unions</th>
-            <th >Heathlcare-Trade unions</th>
+            <th >Healthcare-Trade unions</th>
             <th >Education-Trade unions</th>
             <th >Media-Trade unions</th>
             <th >loan</th>
@@ -2209,7 +2209,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <td className="col">{data.workerclass.getinfo().goodsAndServices.Influence}</td>
             <td className="col">{data.workerclass.getinfo().tradeUnions.Agriculture ? 'existence' : 'null'}</td>
             <td className="col">{data.workerclass.getinfo().tradeUnions.Luxury ? 'existence' : 'null'}</td>
-            <td className="col">{data.workerclass.getinfo().tradeUnions.Heathlcare ? 'existence' : 'null'}</td>
+            <td className="col">{data.workerclass.getinfo().tradeUnions.Healthcare ? 'existence' : 'null'}</td>
             <td className="col">{data.workerclass.getinfo().tradeUnions.Education ? 'existence' : 'null'}</td>
             <td className="col">{data.workerclass.getinfo().tradeUnions.Media ? 'existence' : 'null'}</td>
             <td className="col">{data.workerclass.getinfo().loan}</td>
@@ -2226,8 +2226,8 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
             <th scope="col">Heath</th>
             <th scope="col">education</th>
             <th scope="col">influence</th>
-            <th scope="col">DemonStration</th>
-            <th scope="col">unempolyment</th>
+            <th scope="col">Demonstration</th>
+            <th scope="col">Unemployment</th>
             <th >loan</th>
           </tr>
         </thead>

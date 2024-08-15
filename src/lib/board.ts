@@ -129,14 +129,15 @@ export class Board extends EventEmitter {
     static getInstance() {
         if (!Board.instance) {
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-            const saveddata = localStorage.getItem('Board');
-            if (saveddata) {
-                Board.instance = new Board();
-                Board.instance.setBoard(parse(saveddata));
-            } else {
-                Board.instance = new Board();
+                const saveddata = localStorage.getItem('Board');
+                if (saveddata) {
+                    Board.instance = new Board();
+                    Board.instance.setBoard(parse(saveddata));
+                } else {
+                    Board.instance = new Board();
+                }
             }
-        }}
+        }
         return Board.instance;
     }
     setBoard(data: Board) {
@@ -205,7 +206,7 @@ export class Board extends EventEmitter {
     }
     addPublicService(industry: String, number: number) {
         switch (industry) {
-            case 'Heathlcare':
+            case 'Healthcare':
             case 'Health':
                 this.goodsAndServices.Health += number;
                 break;
@@ -311,7 +312,7 @@ export class Board extends EventEmitter {
         }
     }
     swapworker(Worker: Worker, location: Company, onSuccess: () => void, onError: (message: string) => void) {
-
+        // 查找第一个失业的 unskilled 工人
         const index1 = this.unempolyment.findIndex(w => w.skill === 'unskill');
 
         if (index1 === -1) {
@@ -319,24 +320,36 @@ export class Board extends EventEmitter {
             return;
         }
 
-        // Add the unskilled worker to the company
+        // 获取 unskilled 工人并将其添加到公司
         const unskilledWorker = this.unempolyment[index1];
         location.workingworkers.push(unskilledWorker);
         this.unempolyment.splice(index1, 1);
 
-        // Remove the specified worker from the company
+        // 将目标工人从公司移除
         const index2 = location.workingworkers.findIndex(w => w === Worker);
 
         if (index2 !== -1) {
             location.workingworkers.splice(index2, 1);
+
+            // 确保目标工人的 location 更新为 null 表示失业
+            Worker.location = null;
+
+            // 将目标工人添加到失业列表中
+            this.addworker(Worker);
+
+            // 更新新添加的 unskilled 工人的 location 为新公司
+            unskilledWorker.location = location;
+
+            this.emit('update');
+            onSuccess();
         } else {
+            // 如果目标工人不在公司中，回滚之前的操作
+            location.workingworkers.pop(); // 移除刚添加的 unskilled 工人
+            this.unempolyment.push(unskilledWorker); // 将 unskilled 工人放回失业列表
             onError('Worker not found in the company');
-            return;
         }
-        this.addworker(Worker);
-        this.emit('update');
-        onSuccess();
     }
+
     votingabill(policy: keyof Policy, votingAim: string, classname: WorkerClass | CapitalistClass, onSuccess: () => void, onError: (message: string) => void) {
         if (this.Policy.hasOwnProperty(policy)) {
             const currentGrade = this.Policy[policy];
@@ -658,22 +671,22 @@ export class Board extends EventEmitter {
         return 0;
     }
     Production() {
-        if(this.DemonStration===true){
+        if (this.DemonStration === true) {
             let sum = 0;
             Board.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-              sum += company.requiredWorkers,
-              sum -= company.workingworkers.length
+                sum += company.requiredWorkers,
+                sum -= company.workingworkers.length
             ))
             CapitalistClass.getInstance().getinfo().companys.map((company: Company, index: React.Key | null | undefined) => (
-              sum += company.requiredWorkers,
-              sum -= company.workingworkers.length
+                sum += company.requiredWorkers,
+                sum -= company.workingworkers.length
             ))
-            if(sum+2>this.unempolyment.length){
-                this.DemonStration=false;
+            if (sum + 2 > this.unempolyment.length) {
+                this.DemonStration = false;
             }
-            else{
-                CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score-this.unempolyment.length+sum-WorkerClass.getInstance().getUnion())
-                if(CapitalistClass.getInstance().getinfo().Score<0){
+            else {
+                CapitalistClass.getInstance().setScore(CapitalistClass.getInstance().getinfo().Score - this.unempolyment.length + sum - WorkerClass.getInstance().getUnion())
+                if (CapitalistClass.getInstance().getinfo().Score < 0) {
                     CapitalistClass.getInstance().setScore(0);
                 }
             }
