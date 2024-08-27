@@ -1256,7 +1256,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               {renderActions(actionList, [], key)}
             </div></div>
         ))}</div>
-      {usedBasicActions && <button onClick={handleNextRound}>Next Round</button>}
+      {usedBasicActions && <button className="btn btn-primary" onClick={handleNextRound}>Next Round</button>}
       <div className="modal fade" id="Votingbill" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1} aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -1600,7 +1600,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Buying</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
@@ -1619,7 +1619,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Assign Worker</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
@@ -1700,7 +1700,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Assign Worker</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div>{Usingitem} have {WorkerClass.getInstance().getinfo().goodsAndServices[Usingitem]}</div>
@@ -1806,7 +1806,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Strike</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
@@ -1880,7 +1880,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Company Market</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
@@ -1912,7 +1912,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">SellCompany</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
@@ -1945,7 +1945,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">ForeignMarket</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
@@ -2109,7 +2109,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">Adjust Wages{Usingitem}</h1>
+              <h1 className="modal-title fs-5" id="staticBackdropLabel">Adjust Wages</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             {usingcompany && <Image src={usingcompany!.imageUrl} height={100} width={100} alt='picture of usingcomany' />}
