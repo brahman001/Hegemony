@@ -162,19 +162,19 @@ export const GameRun: React.FC = () => {
     }
   }, []);
   const handleNextRound = () => {
-    if (gameState.currentRound === 5 && gameState.currentTurn < 5 && gameState.nowclass instanceof CapitalistClass) {
+    if (gameState.currentRound === 2 && gameState.currentTurn < 2 && gameState.nowclass instanceof CapitalistClass) {
       setGameState(prev => ({
         ...prev,
         phase: 'Production'
       }));
     }
-    else if (gameState.currentRound === 5 && gameState.currentTurn === 5 && gameState.nowclass instanceof CapitalistClass) {
+    else if (gameState.currentRound === 2 && gameState.currentTurn === 2 && gameState.nowclass instanceof CapitalistClass) {
       setGameState(prev => ({
         ...prev,
         phase: 'End Phase'
       }));
       EndPhase();
-      console.log("jieshu")
+      console.log("gameend,the winner is "+winer);
     } else {
       setUsedFreeActions(false);
       setUsedBasicActions(false);
@@ -467,7 +467,7 @@ export const GameRun: React.FC = () => {
               <h5 className="modal-title">fininsh worker</h5>
             </div>
             <div className="modal-body">
-              <p>The game is ready to play!</p>
+              
               {renderBuyingOptions()}
               <button type="button" className="btn btn-secondary" onClick={() => { WorkerClass.getInstance().using('Food'); setEatingModal(false); Production2(); }}
                 disabled={WorkerClass.getInstance().getinfo().goodsAndServices.Food < WorkerClass.getInstance().getinfo().population.population_level}>
@@ -486,7 +486,7 @@ export const GameRun: React.FC = () => {
               <h5 className="modal-title">Voting</h5>
             </div>
             <div className="modal-body">
-              <p>The game is ready to play!</p>
+              
               {RenderVotingOptions()}
               {votingName ? (
                 <h3>
@@ -779,7 +779,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
       }
     ],
     free: [
-      { label: 'UseHealthcare', databstarget: 'Using', onClick: () => setUsingitem('Health'), visibleFor: ['WorkerClass'] },
+      { label: 'Use Healthcare', databstarget: 'Using', onClick: () => setUsingitem('Health'), visibleFor: ['WorkerClass'] },
       { label: 'Use Education', databstarget: 'Using', onClick: () => setUsingitem('Education'), visibleFor: ['WorkerClass'] },
       { label: 'Use Luxury', databstarget: 'Using', onClick: () => setUsingitem('Luxury'), visibleFor: ['WorkerClass'] },
       { label: 'Swap workers', databstarget: 'SwapWorker', visibleFor: ['WorkerClass'] },
@@ -1264,7 +1264,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">{votingName}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>{votingName}`s 当前政策{Board.getInstance().getinfo().Policy[votingName]}{votingrapidly ? <p>ok</p> : <p>not</p>}
+            <div>{votingName}`s {Board.getInstance().getinfo().Policy[votingName]}{votingrapidly ? <p>ok</p> : <p>not</p>}
             </div>
             <div className="modal-body">
               <div className="d-flex justify-content-center" >
@@ -1458,7 +1458,7 @@ const ActionToggle: React.FC<ActionToggleProps> = ({ nowclass, onActionComplete,
               <h1 className="modal-title fs-5" id="staticBackdropLabel">loan</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div>s 当前{info.loan}</div>
+            <div>{info.loan}</div>
             <div className="modal-body">
               {nowclass instanceof WorkerClass &&
                 WorkerClass.getInstance().getinfo().loan !== 0 ?
@@ -2384,7 +2384,7 @@ function DataTable(data: { workerclass: WorkerClass; capitalistclass: Capitalist
           </div>
         </div>
         <div>
-          填充物
+          |
         </div>
         <div className="p-2 flex-fill">
           <h3 className="container text-center">Capitalist Class Companies</h3>

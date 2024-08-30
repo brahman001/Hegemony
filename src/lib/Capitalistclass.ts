@@ -265,8 +265,8 @@ export class CapitalistClass extends EventEmitter {
     SellCompay(company: Company) {
         for (let i = 0; i < company.workingworkers.length; i++) {
             company.workingworkers[0].location = null;
+             Board.getInstance().addworker(company.workingworkers[0]);
             company.workingworkers.splice(0);
-            Board.getInstance().addworker(company.workingworkers[0]);
         }
         const companyIndex = this.Company.findIndex(Company => Company === company);
         if (companyIndex > -1) {

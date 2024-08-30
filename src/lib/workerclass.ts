@@ -12,7 +12,7 @@ export interface Population {
     Natureofposition: {
         Agriculture: number;
         Luxury: number;
-       Healthcare: number;
+        Healthcare: number;
         Education: number;
         Media: number;
     };
@@ -23,7 +23,7 @@ export interface Population {
 interface TradeUnions {
     Agriculture: boolean;
     Luxury: boolean;
-   Healthcare: boolean;
+    Healthcare: boolean;
     Education: boolean;
     Media: boolean;
 }
@@ -55,7 +55,7 @@ export class WorkerClass extends EventEmitter {
             Natureofposition: {
                 Agriculture: 0,
                 Luxury: 0,
-               Healthcare: 0,
+                Healthcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -65,11 +65,11 @@ export class WorkerClass extends EventEmitter {
         this.tradeUnions = {
             Agriculture: false,
             Luxury: false,
-           Healthcare: false,
+            Healthcare: false,
             Education: false,
             Media: false,
         };
-        this.income = 0;
+        this.income = 30;
         this.prosperity = 0;
         this.cooperativefarm = 0;
         this.goodsAndServices = {
@@ -77,7 +77,7 @@ export class WorkerClass extends EventEmitter {
             Luxury: 0,
             Health: 0,
             Education: 0,
-            Influence: 0,
+            Influence: 1,
         };
     }
     public static getInstance(): WorkerClass {
@@ -104,7 +104,7 @@ export class WorkerClass extends EventEmitter {
             Natureofposition: {
                 Agriculture: 0,
                 Luxury: 0,
-               Healthcare: 0,
+                Healthcare: 0,
                 Education: 0,
                 Media: 0,
             },
@@ -114,7 +114,7 @@ export class WorkerClass extends EventEmitter {
         this.tradeUnions = {
             Agriculture: false,
             Luxury: false,
-           Healthcare: false,
+            Healthcare: false,
             Education: false,
             Media: false,
         };
